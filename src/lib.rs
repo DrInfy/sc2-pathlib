@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use pathfinding::prelude::{absdiff, astar};
+use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct Pos(usize, usize);
@@ -108,21 +109,23 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 #[pyfunction]
 /// Tests a path and returns a string defining the tested path
 fn debug_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: usize) -> PyResult<String> {
+    let now = Instant::now();
     let start: Pos = Pos(start_x, start_y);
     let goal: Pos = Pos(x, y);
-    //let grid = a.clone().as_mut();
+    
     let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal) / 3, |p| *p == goal);
     //assert_eq!(result.expect("no path found").len(), 5);
     let unwrapped = result.unwrap();
     let path = unwrapped.0;
     let distance = unwrapped.1;
 
+    let time_taken = now.elapsed().as_micros();
     let steps = path.len().to_string();
     let mut path_text = String::new();
     for step in path {
         path_text.push_str(&format!("{},{} ", step.0, step.1));
     }
-    Ok(format!("len: {} distance: {} start: {},{} goal: {},{} Path: {}", steps, distance, start_x, start_y, x, y, &path_text))
+    Ok(format!("time taken: {}µs len: {} distance: {} start: {},{} goal: {},{} Path: {}", time_taken, steps, distance, start_x, start_y, x, y, &path_text))
 }
 
 
@@ -146,7 +149,7 @@ fn find_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: u
 #[pymodule]
 fn sc2pathlib(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(sum_as_string))?;
-    m.add_wrapped(wrap_pyfunction!(find_path))?;
+    m.add_wrapped(wrap_pyfunction!(debug_path))?;
     m.add_wrapped(wrap_pyfunction!(find_path))?;
 
     Ok(())
