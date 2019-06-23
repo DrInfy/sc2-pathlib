@@ -106,8 +106,8 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 }
 
 #[pyfunction]
-/// Formats the sum of two numbers as string
-fn find_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: usize) -> PyResult<String> {
+/// Tests a path and returns a string defining the tested path
+fn debug_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: usize) -> PyResult<String> {
     let start: Pos = Pos(start_x, start_y);
     let goal: Pos = Pos(x, y);
     //let grid = a.clone().as_mut();
@@ -123,14 +123,30 @@ fn find_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: u
         path_text.push_str(&format!("{},{} ", step.0, step.1));
     }
     Ok(format!("len: {} distance: {} start: {},{} goal: {},{} Path: {}", steps, distance, start_x, start_y, x, y, &path_text))
-    
-    //Ok(format!("len: {} x: {} y: {}", a.len().to_string(), x, y))
+}
+
+
+#[pyfunction]
+/// Find the path and returns the path
+fn find_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: usize) -> PyResult<(Vec<(usize, usize)>, u32)> {
+    let start: Pos = Pos(start_x, start_y);
+    let goal: Pos = Pos(x, y);
+    let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal) / 3, |p| *p == goal);
+    //assert_eq!(result.expect("no path found").len(), 5);
+    let unwrapped = result.unwrap();
+    let mut path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
+
+    for pos in unwrapped.0 {
+        path.push((pos.0, pos.1))    
+    }
+    Ok((path, unwrapped.1))
 }
 
 /// This module is a python module implemented in Rust.
 #[pymodule]
 fn sc2pathlib(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(sum_as_string))?;
+    m.add_wrapped(wrap_pyfunction!(find_path))?;
     m.add_wrapped(wrap_pyfunction!(find_path))?;
 
     Ok(())
