@@ -8,7 +8,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 #### Python
 
-You will need Python 3.6 or newer.
+You will need Python 3.7 or newer.
 
 #### Rust
 
@@ -40,7 +40,11 @@ nightly compiler.
 ### Installing
 
 
-Clone the sc2-pathlib repository and run `cargo build --release` in the sc2-pathlib directory. This should create a `sc2pathlib.so`(Linux) or a `sc2pathlib.dll`(Windows) file in `sc2-pathlib\target\release`. If on Windows, you need to rename the `sc2pathlib.dll` file to `sc2pathlib.pyd`. Copy `sc2pathlib.so`/`sc2pathlib.pyd` to the directory where your Python program resides to be able to import it as a Python library
+Clone the sc2-pathlib repository and run `cargo build --release` in the sc2-pathlib directory. This should create a `sc2pathlib.so`(Linux) or a `sc2pathlib.dll`(Windows) file in `sc2-pathlib\target\release`. If on Windows, you need to rename the `sc2pathlib.dll` file to `sc2pathlib.pyd`. 
+
+Alternatively, you can run `build.bat` which automates the process above for Windows.
+
+Copy `sc2pathlib.so`/`sc2pathlib.pyd` to the directory where your Python program resides to be able to import it as a Python library.
 
 #### Example
 ```
