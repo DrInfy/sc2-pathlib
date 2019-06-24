@@ -43,7 +43,7 @@ impl Pos {
 
         if val_left > 0
         {
-            arr.push((Pos(x - 1, y), val_left));
+            arr.push((Pos(x - 1, y), val_left * MULT));
 
             if val_down > 0
             {
@@ -66,7 +66,7 @@ impl Pos {
 
         if val_right > 0
         {
-            arr.push((Pos(x + 1, y), val_right));
+            arr.push((Pos(x + 1, y), val_right * MULT));
 
             if val_down > 0
             {
@@ -89,12 +89,12 @@ impl Pos {
 
         if val_up > 0
         {
-            arr.push((Pos(x, y + 1), val_up));
+            arr.push((Pos(x, y + 1), val_up * MULT));
         }
 
         if val_down > 0
         {
-            arr.push((Pos(x, y - 1), val_down));
+            arr.push((Pos(x, y - 1), val_down * MULT));
         }
 
         arr.clone()
