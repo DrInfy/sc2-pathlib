@@ -1,29 +1,29 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
-use pathfinding::prelude::{absdiff, astar};
+use pathfinding::prelude::{absdiff, astar, dijkstra, idastar};
 use std::time::Instant;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct Pos(usize, usize);
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
-static SQRT2: u32 = 14142;
-static MULT: u32 = 10000;
+static SQRT2: usize = 14142;
+static MULT: usize = 10000;
 
 impl Pos {
-    fn distance(&self, other: &Pos) -> u32 {
-        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) as u32
+    fn distance(&self, other: &Pos) -> usize {
+        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT
     }
 
-  fn successors(&self, grid: &Vec<Vec<u32>>) -> Vec<(Pos, u32)> {
+  fn successors(&self, grid: &Vec<Vec<usize>>) -> Vec<(Pos, usize)> {
         let &Pos(x, y) = self;
-        let mut arr = Vec::<(Pos, u32)>::with_capacity(8);
+        let mut arr = Vec::<(Pos, usize)>::with_capacity(8);
         //let arr = Vec<(Pos, f32)>();
 
-        let mut val_left = 0;
-        let mut val_down = 0;
-        let mut val_right = 0;
-        let mut val_up = 0;
+        let mut val_left: usize = 0;
+        let mut val_down: usize = 0;
+        let mut val_right: usize = 0;
+        let mut val_up: usize = 0;
 
         if x > 0 {
             val_left =  grid[x - 1][y];
@@ -43,7 +43,7 @@ impl Pos {
 
         if val_left > 0
         {
-            arr.push((Pos(x - 1, y), val_left * MULT));
+            arr.push((Pos(x - 1, y), val_left));
 
             if val_down > 0
             {
@@ -66,7 +66,7 @@ impl Pos {
 
         if val_right > 0
         {
-            arr.push((Pos(x + 1, y), val_right * MULT));
+            arr.push((Pos(x + 1, y), val_right));
 
             if val_down > 0
             {
@@ -82,19 +82,19 @@ impl Pos {
                 let diag_val = grid[x + 1][y + 1];
 
                 if diag_val > 0 {
-                    arr.push((Pos(x + 1, y + 1), diag_val * SQRT2));
+                    arr.push((Pos(x + 1, y + 1), SQRT2));
                 }
             }
         }
 
         if val_up > 0
         {
-            arr.push((Pos(x, y + 1), val_up * MULT));
+            arr.push((Pos(x, y + 1), val_up));
         }
 
         if val_down > 0
         {
-            arr.push((Pos(x, y - 1), val_down * MULT));
+            arr.push((Pos(x, y - 1), val_down));
         }
 
         arr.clone()
@@ -102,44 +102,65 @@ impl Pos {
 }
 
 #[pyfunction]
-/// Formats the sum of two numbers as string
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
-}
-
-#[pyfunction]
 /// Tests a path and returns a string defining the tested path
-fn debug_path(grid: Vec<Vec<u32>>, start_x: usize, start_y: usize, x: usize, y: usize) -> PyResult<String> {
-    let now = Instant::now();
-    let start: Pos = Pos(start_x, start_y);
-    let goal: Pos = Pos(x, y);
+fn debug_path(grid: Vec<Vec<usize>>, start: (usize, usize), end: (usize, usize)) -> PyResult<String> {
+    let start: Pos = Pos(start.0, start.1);
+    let goal: Pos = Pos(end.0, end.1);
     
-    let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal) / 3, |p| *p == goal);
-    //assert_eq!(result.expect("no path found").len(), 5);
+    let mut dict = HashMap::<Pos,Vec<(Pos, usize)>>::new();
+    let height = grid[0].len();
+
+    for x in 0..grid.len() {
+       for y in 0..height {
+           let temp = Pos(x, y);
+           let successors = temp.successors(&grid);
+           dict.insert(temp, successors);
+       }
+    }
+    let test = dict.get(&start).unwrap();
+
+    let now = Instant::now();
+    let result = astar(&start, |p| dict.get(&p).unwrap().clone(), |p| p.distance(&goal), |p| *p == goal);
+    let time_taken = now.elapsed().as_micros() as f32 / 1000.0;
+
     let unwrapped = result.unwrap();
     let path = unwrapped.0;
     let distance = unwrapped.1;
 
-    let time_taken = now.elapsed().as_micros();
     let steps = path.len().to_string();
     let mut path_text = String::new();
     for step in path {
         path_text.push_str(&format!("{},{} ", step.0, step.1));
     }
-    Ok(format!("time taken: {}µs len: {} distance: {} start: {},{} goal: {},{} Path: {}", time_taken, steps, distance, start_x, start_y, x, y, &path_text))
+    Ok(format!("time taken: {} ms len: {} distance: {} start: {},{} goal: {},{} Path: {}", time_taken, steps, distance, start.0, start.1, end.0, end.1, &path_text))
 }
-
 
 #[pyfunction]
 /// Find the path and returns the path
-fn find_path(grid: Vec<Vec<u32>>, start: (usize, usize), end: (usize, usize)) -> PyResult<(Vec<(usize, usize)>, u32)> {
+fn find_path(grid: Vec<Vec<usize>>, start: (usize, usize), end: (usize, usize)) -> PyResult<(Vec<(usize, usize)>, usize)> {
     let start: Pos = Pos(start.0, start.1);
     let goal: Pos = Pos(end.0, end.1);
 
+    // let mut dict = HashMap::<Pos,Vec<(Pos, u32)>>::new();
+    // let height = grid[0].len();
+
+    // for x in 0..grid.len() {
+    //    for y in 0..height {
+    //        let temp = Pos(x, y);
+    //        let successors = temp.successors(&grid);
+    //        dict.insert(temp, successors);
+    //    }
+    // }
+    // let test = dict.get(&start).unwrap();
+    // let result = astar(&start, |p| dict.get(&p).unwrap().clone(), |p| p.distance(&goal), |p| *p == goal);
+    
     let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal), |p| *p == goal);
+    //let result = dijkstra(&start, |p| p.successors(&grid), |p| *p == goal);
+    //let result = bfs(&start, |p| p.successors(&grid), |p| *p == goal);
+    //let result = idastar(&start, |p| p.successors(&grid), |p| p.distance(&goal), |p| *p == goal);
     
     let mut path: Vec<(usize, usize)>;
-    let distance: u32;
+    let distance: usize;
 
     if result.is_none(){
         path = Vec::<(usize, usize)>::new();
