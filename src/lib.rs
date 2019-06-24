@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
-use pathfinding::prelude::{absdiff, astar, dijkstra, idastar};
+use pathfinding::prelude::{absdiff, astar, dijkstra_all};
 use std::time::Instant;
 use std::collections::HashMap;
 
@@ -140,24 +140,8 @@ fn debug_path(grid: Vec<Vec<usize>>, start: (usize, usize), end: (usize, usize))
 fn find_path(grid: Vec<Vec<usize>>, start: (usize, usize), end: (usize, usize)) -> PyResult<(Vec<(usize, usize)>, usize)> {
     let start: Pos = Pos(start.0, start.1);
     let goal: Pos = Pos(end.0, end.1);
-
-    // let mut dict = HashMap::<Pos,Vec<(Pos, u32)>>::new();
-    // let height = grid[0].len();
-
-    // for x in 0..grid.len() {
-    //    for y in 0..height {
-    //        let temp = Pos(x, y);
-    //        let successors = temp.successors(&grid);
-    //        dict.insert(temp, successors);
-    //    }
-    // }
-    // let test = dict.get(&start).unwrap();
-    // let result = astar(&start, |p| dict.get(&p).unwrap().clone(), |p| p.distance(&goal), |p| *p == goal);
     
     let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal), |p| *p == goal);
-    //let result = dijkstra(&start, |p| p.successors(&grid), |p| *p == goal);
-    //let result = bfs(&start, |p| p.successors(&grid), |p| *p == goal);
-    //let result = idastar(&start, |p| p.successors(&grid), |p| p.distance(&goal), |p| *p == goal);
     
     let mut path: Vec<(usize, usize)>;
     let distance: usize;
@@ -178,11 +162,24 @@ fn find_path(grid: Vec<Vec<usize>>, start: (usize, usize), end: (usize, usize)) 
     Ok((path, distance))
 }
 
+#[pyfunction]
+fn debug_all_paths(grid: Vec<Vec<usize>>, start: (usize, usize)) -> PyResult<String> {
+    let start: Pos = Pos(start.0, start.1);
+    let now = Instant::now();
+
+    let result = dijkstra_all(&start, |p| p.successors(&grid));
+    let time_taken = now.elapsed().as_micros() as f32 / 1000.0;
+
+    Ok(format!("time taken: {} ms to solve all paths to point {},{}.", time_taken, start.0, start.1))
+
+}
+
 /// This module is a python module implemented in Rust.
 #[pymodule]
 fn sc2pathlib(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(debug_path))?;
     m.add_wrapped(wrap_pyfunction!(find_path))?;
+    m.add_wrapped(wrap_pyfunction!(debug_all_paths))?;
 
     Ok(())
 }
