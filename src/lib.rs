@@ -3,16 +3,25 @@ use pyo3::wrap_pyfunction;
 use pathfinding::prelude::{absdiff, astar, dijkstra_all};
 use std::time::Instant;
 use std::collections::HashMap;
+use std::cmp::min;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct Pos(usize, usize);
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 static SQRT2: usize = 14142;
 static MULT: usize = 10000;
+static MULTf64: f64 = 10000.0;
 
 impl Pos {
     fn distance(&self, other: &Pos) -> usize {
-        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT
+        ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f64).sqrt() * MULTf64) as usize 
+
+        //(absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT
+        
+        //let xd = absdiff(self.0, other.0);
+        //let yd = absdiff(self.1, other.1);
+        //let diag = min(xd, yd);
+        //(xd + yd - diag - diag) * MULT + diag * SQRT2
     }
 
   fn successors(&self, grid: &Vec<Vec<usize>>) -> Vec<(Pos, usize)> {
