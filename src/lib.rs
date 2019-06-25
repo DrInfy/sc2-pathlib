@@ -209,6 +209,18 @@ impl PathFind {
 
         obj.init(PathFind { map, dict })
     }
+    // object.map
+    #[getter(map)]
+    fn get_map(&self)-> PyResult<Vec<Vec<usize>>>{
+        Ok(self.map.clone())
+    }
+
+    // object.map(2dArray)
+    #[setter(map)]
+    fn set_map(&mut self, value:Vec<Vec<usize>>) -> PyResult<()> {
+        self.map = value;
+        Ok(())
+    }
 
     /// Find the path using influence values and returns the path and distance
     fn find_path(&self, start: (usize, usize), end: (usize, usize), 
