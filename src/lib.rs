@@ -207,6 +207,31 @@ impl PathFind {
         self.map = value;
         Ok(())
     }
+    // Creates a building on the grid that is not pathable
+    // Position = center of building
+    fn create_building(&mut self, position: (f32,f32), size: (usize, usize))
+    {
+        let mut grid: Vec<Vec<usize>> = self.map.clone();
+        
+        let pos_x: f32 = position.0;
+        let pos_y: f32 = position.1;
+
+        let w: usize = size.0;
+        let h: usize = size.1;
+        let w_start: usize;
+        let h_start: usize;
+
+        w_start = (pos_x as f32 - (w as f32 / 2 as f32)).ceil() as usize;
+        h_start = (pos_y as f32 - (h as f32 / 2 as f32)).ceil() as usize;
+
+
+        for x in w_start..(w+w_start) {
+            for y in h_start..(h+h_start){
+                grid[x][y] = 0;
+            }
+        }
+        self.map = grid;
+    }
 
     /// Find the path using influence values and returns the path and distance
     fn find_path(&self, start: (usize, usize), end: (usize, usize), 
