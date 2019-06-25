@@ -184,30 +184,16 @@ impl Pos {
 
 #[pyclass]
 pub struct PathFind {
-    map: Vec<Vec<usize>>,
-    dict: Vec<Vec<Vec<(Pos, usize)>>>
+    map: Vec<Vec<usize>>
 }
 
 #[pymethods]
 impl PathFind {
     #[new]
     fn new(obj: &PyRawObject, map: Vec<Vec<usize>>) {
-        let mut dict : Vec<Vec<Vec<(Pos, usize)>>> = Vec::<Vec<Vec<(Pos, usize)>>>::new();
         let height = map[0].len();
 
-        for x in 0..map.len() {
-            let mut column = Vec::<Vec<(Pos, usize)>>::new();
-
-            for y in 0..height {
-                let temp = Pos(x, y);
-                let successors = temp.successors(&map);
-                column.push(successors)
-            }
-
-            dict.push(column);
-        }
-
-        obj.init(PathFind { map, dict })
+        obj.init(PathFind { map})
     }
     // object.map
     #[getter(map)]
@@ -228,7 +214,6 @@ impl PathFind {
         let start: Pos = Pos(start.0, start.1);
         let goal: Pos = Pos(end.0, end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let dict: &Vec<Vec<Vec<(Pos, usize)>>> = &self.dict;
         let use_influence = possible_influence.unwrap_or(true);
 
 
