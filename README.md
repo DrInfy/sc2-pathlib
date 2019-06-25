@@ -49,7 +49,7 @@ Copy `sc2pathlib.so`/`sc2pathlib.pyd` to the directory where your Python program
 #### Example
 ```
 >>> import sc2pathlib
->>> sc2pathlib.find_path([[1,1,1,1],[0,0,0,1],[1,1,0,1],[1,1,1,1]], 0, 0, 2, 0)
+>>> sc2pathlib.find_path([[1,1,1,1],[0,0,0,1],[1,1,0,1],[1,1,1,1]], (0, 0), (2, 0))
 
 ([(0, 0), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1), (2, 0)], 94142)
 >>>
@@ -63,12 +63,8 @@ Uses A* pathfinding algorithm and returns a tuple containing the path as an arra
 Example:
 `[[1,1,1,1],[0,0,0,1],[1,1,0,1],[1,1,1,1]]`
 
-`start_x`: Int with the x-value of the start position.
-`start_y`: Int with the y-value of the start position
-`x`: Int with the x-value of the goal position.
-`y`: Int with the y-value of the goal position.
-Example:
-If the start position is (10,5) then `start_x` will be `10` and `start_y` will be 5.
+`start`: Tuple with the x and y value of the start position.
+`end`: Tuple with the x and y value of the end position.
 
 ### debug_path
 Same function as above but returns a string containing the length of the array of tuples, the distance x 10000, the start position and the goal position.
