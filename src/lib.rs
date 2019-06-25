@@ -182,25 +182,31 @@ impl PathFind {
         
         Ok((path, distance))
     }
-}
 
-#[pyfunction]
-fn debug_all_paths(grid: Vec<Vec<usize>>, start: (usize, usize)) -> PyResult<String> {
+    /// Finds all reachable destinations from selected start point. Ignores influence.
+    fn find_all_destinations(&self, start: (usize, usize)) -> PyResult<Vec<((usize, usize), f64)>> {
     let start: Pos = Pos(start.0, start.1);
-    let now = Instant::now();
+        let grid: &Vec<Vec<usize>> = &self.map;
+        let result = dijkstra_all(&start, |p| p.successors_no_influence(&grid));
 
-    let result = dijkstra_all(&start, |p| p.successors(&grid));
-    let time_taken = now.elapsed().as_micros() as f32 / 1000.0;
+        let mut destination_collection: Vec<((usize, usize), f64)> = Vec::<((usize, usize), f64)>::with_capacity(result.len());
+        let distance: f64;
 
-    Ok(format!("time taken: {} ms to solve all paths to point {},{}.", time_taken, start.0, start.1))
+        for found_path in result {
+            let x = ((found_path.1).0).0;
+            let y = ((found_path.1).0).1;
+            let d = ((found_path.1).1 as f64) / MULTF64;
+            destination_collection.push(((x, y), d));
+        }
 
+        Ok(destination_collection)
+    }
 }
+
 
 /// This module is a python module implemented in Rust.
 #[pymodule]
 fn sc2pathlib(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PathFind>()?;
-    m.add_wrapped(wrap_pyfunction!(debug_all_paths))?;
-
     Ok(())
 }
