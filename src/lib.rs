@@ -232,7 +232,7 @@ impl PathFind {
         }
         self.map = grid;
     }
-
+  
     /// Find the path using influence values and returns the path and distance
     fn find_path(&self, start: (usize, usize), end: (usize, usize), 
             possible_influence: Option<bool>, possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
