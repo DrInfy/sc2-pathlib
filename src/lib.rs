@@ -91,7 +91,7 @@ impl Pos {
                 let diag_val = grid[x + 1][y + 1];
 
                 if diag_val > 0 {
-                    arr.push((Pos(x + 1, y + 1), SQRT2));
+                    arr.push((Pos(x + 1, y + 1), diag_val * SQRT2));
                 }
             }
         }
