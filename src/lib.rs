@@ -122,6 +122,19 @@ impl PathFind {
         obj.init(PathFind { map })
     }
 
+    // object.map
+    #[getter(map)]
+    fn get_map(&self)-> PyResult<Vec<Vec<usize>>>{
+        Ok(self.map.clone())
+    }
+
+    // object.map(2dArray)
+    #[setter(map)]
+    fn set_map(&mut self, value:Vec<Vec<usize>>) -> PyResult<()> {
+        self.map = value;
+        Ok(())
+    }
+    
     /// Tests a path and returns a string defining the tested path
     fn debug_path(&mut self, start: (usize, usize), end: (usize, usize)) -> PyResult<String> {
         let start: Pos = Pos(start.0, start.1);
