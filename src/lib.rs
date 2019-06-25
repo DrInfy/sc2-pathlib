@@ -106,7 +106,7 @@ impl Pos {
             arr.push((Pos(x, y - 1), val_down * MULT));
         }
 
-        arr.clone()
+        arr
     }
 }
 
@@ -157,7 +157,7 @@ impl PathFind {
     }
 
     /// Find the path and returns the path
-    fn find_path(&mut self,start: (usize, usize), end: (usize, usize)) -> PyResult<(Vec<(usize, usize)>, usize)> {
+    fn find_path(&mut self,start: (usize, usize), end: (usize, usize)) -> PyResult<(Vec<(usize, usize)>, f64)> {
         let start: Pos = Pos(start.0, start.1);
         let goal: Pos = Pos(end.0, end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
@@ -165,15 +165,15 @@ impl PathFind {
         let result = astar(&start, |p| p.successors(&grid), |p| p.distance(&goal), |p| *p == goal);
         
         let mut path: Vec<(usize, usize)>;
-        let distance: usize;
+        let distance: f64;
 
         if result.is_none(){
             path = Vec::<(usize, usize)>::new();
-            distance = 0
+            distance = 0.0
         }
         else {
             let unwrapped = result.unwrap();
-            distance = unwrapped.1;
+            distance = (unwrapped.1 as f64) / MULTf64;
             path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
             for pos in unwrapped.0 {
                 path.push((pos.0, pos.1))    
