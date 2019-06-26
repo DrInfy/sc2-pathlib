@@ -151,7 +151,12 @@ impl PathFind {
             _ => Box::new(|p: &pos::Pos| p.euclidean_distance(&goal)),
         };
 
-        let result = astar(&start, |p| p.successors(grid), heuristic, |p| *p == goal);
+        let result: Option<(Vec<pos::Pos>, usize)>;
+        match possible_heuristic.unwrap_or(0) {
+            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal), |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.quick_distance(&goal),  |p| *p == goal),
+            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal),  |p| *p == goal),
+        };
         
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
@@ -177,14 +182,15 @@ impl PathFind {
         let start = pos::InfluencedPos(start.0, start.1);
         let goal = pos::InfluencedPos(end.0, end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let inf = self.normal_influence;
-        // let heuristic: Box<dyn Fn(&pos::InfluencedPos)->usize> = match possible_heuristic.unwrap_or(0) {
-        //     0 => Box::new(|p: &pos::InfluencedPos| p.manhattan_distance(&goal, self.normal_influence)),
-        //     1 => Box::new(|p: &pos::InfluencedPos| p.quick_distance(&goal, self.normal_influence)),
-        //     _ => Box::new(|p: &pos::InfluencedPos| p.euclidean_distance(&goal, self.normal_influence)),
-        // };
+        let infl = self.normal_influence;
 
-        let result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, inf), |p| *p == goal);
+        let result: Option<(Vec<pos::InfluencedPos>, usize)>;
+
+        match possible_heuristic.unwrap_or(0) {
+            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, infl), |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.quick_distance(&goal, infl),  |p| *p == goal),
+            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal, infl),  |p| *p == goal),
+        };
         
         let mut path: Vec<(usize, usize)>;
         let distance: f64;

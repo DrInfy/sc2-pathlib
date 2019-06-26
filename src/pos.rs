@@ -15,7 +15,12 @@ impl Pos {
     }
 
     pub fn euclidean_distance(&self, other: &Pos) -> usize {
-        ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f64).sqrt() * MULTF64) as usize
+        let a = (self.0 - other.0);
+        let b = (self.1 - other.1);
+        let dist2 = a * a + b * b;
+        ((dist2 as f64).sqrt() * MULTF64) as usize
+
+        // ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f64).sqrt() * MULTF64) as usize
     }
 
     pub fn quick_distance(&self, other: &Pos) -> usize {
@@ -72,7 +77,7 @@ impl Pos {
         }
 
         if val_right > 0 {
-            arr.push((Pos(x + 1, y), val_right * MULT));
+            arr.push((Pos(x + 1, y), MULT));
 
             if val_down > 0 {
                 let diag_val = grid[x + 1][y - 1];
@@ -109,12 +114,15 @@ pub struct InfluencedPos(pub usize, pub usize);
 impl InfluencedPos {
     #[inline]
     pub fn manhattan_distance(&self, other: &InfluencedPos, normal_influence: usize) -> usize {
-        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT
+        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT * normal_influence
     }
 
     #[inline]
     pub fn euclidean_distance(&self, other: &InfluencedPos, normal_influence: usize) -> usize {
-        (((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) * normal_influence) as f64).sqrt() * MULTF64) as usize
+        let a = (self.0 - other.0) * normal_influence;
+        let b = (self.1 - other.1) * normal_influence;
+        let dist2 = a * a + b * b;
+        ((dist2 as f64).sqrt() * MULTF64) as usize
     }
 
     #[inline]

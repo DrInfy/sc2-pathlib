@@ -31,22 +31,22 @@ pf = sc2pathlib.PathFind(maze)
 pf.normalize_influence(10)
 
 result = pf.find_path((32, 51),(150, 129), 0)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path distance 0: {result[1]} for path: {result[0]}")
 
 result = pf.find_path((32, 51),(150, 129), 1)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path distance 1: {result[1]} for path: {result[0]}")
 
 result = pf.find_path((32, 51),(150, 129), 2)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path distance 2: {result[1]} for path: {result[0]}")
 
 result = pf.find_path_influence((32, 51),(150, 129), 0)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path influenced distance 0: {result[1]} for path: {result[0]}")
 
 result = pf.find_path_influence((32, 51),(150, 129), 1)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path influenced distance 1: {result[1]} for path: {result[0]}")
 
 result = pf.find_path_influence((32, 51),(150, 129), 2)
-print(f"path distance: {result[1]} for path: {result[0]}")
+print(f"path influenced distance 2: {result[1]} for path: {result[0]}")
 
 expansions = [(29, 65), (35, 34), 
 (63, 26), (56, 65),
@@ -63,7 +63,7 @@ pf.normalize_influence(100)
 
 for pos1 in expansions:
     for pos2 in expansions:
-        result = pf.find_path_influence(pos1, pos2, 0)
+        result = pf.find_path(pos1, pos2, 2)
         total_distance += result[1]
 
 ns_pf = time.perf_counter_ns() - ns_pf
