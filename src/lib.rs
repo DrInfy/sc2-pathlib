@@ -10,7 +10,8 @@ mod pos;
 pub struct PathFind {
     map: Vec<Vec<usize>>,
     width: usize,
-    height: usize
+    height: usize,
+    normal_influence: usize
 }
 
 fn quick_distance(first: (usize, usize), other: (usize, usize)) -> usize {
@@ -26,7 +27,8 @@ impl PathFind {
     fn new(obj: &PyRawObject, map: Vec<Vec<usize>>) {
         let width = map.len();
         let height = map[0].len();
-        obj.init(PathFind { map, width, height})
+        let normal_influence: usize = 1;
+        obj.init(PathFind { map, width, height, normal_influence})
     }
 
     // object.width
@@ -39,6 +41,12 @@ impl PathFind {
     #[getter(height)]
     fn get_height(&self)-> PyResult<usize>{
         Ok(self.height)
+    }
+
+    // object.normal_influence
+    #[getter(normal_influence)]
+    fn get_normal_influenceidth(&self)-> PyResult<usize>{
+        Ok(self.normal_influence)
     }
 
     // object.map
@@ -81,7 +89,8 @@ impl PathFind {
 
     fn normalize_influence(&mut self, value: usize) {
         let height = self.map[0].len();
-
+        self.normal_influence = value;
+        
         for x in 0..self.map.len() {
             for y in 0..height {
                 if self.map[x][y] > 0 {
@@ -129,28 +138,53 @@ impl PathFind {
 
         (min_position, min_distance as f64 / pos::MULTF64)
     }
-  
-    /// Find the path using influence values and returns the path and distance
-    fn find_path(&self, start: (usize, usize), end: (usize, usize), 
-            possible_influence: Option<bool>, possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
+    
+     /// Find the shortest path values without considering influence and returns the path and distance
+    fn find_path(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let goal: pos::Pos = pos::Pos(end.0, end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let use_influence = possible_influence.unwrap_or(true);
 
-
-        let method: Box<Fn(&pos::Pos) -> Vec<(pos::Pos, usize)>> = match use_influence {
-            true => Box::new(|p: &pos::Pos| p.successors(&grid)),
-            _ => Box::new(|p: &pos::Pos| p.successors_no_influence(&grid))
-        };
-
-        let heuristic: Box<Fn(&pos::Pos)->usize> = match possible_heuristic.unwrap_or(0) {
+        let heuristic: Box<dyn Fn(&pos::Pos)->usize> = match possible_heuristic.unwrap_or(0) {
             0 => Box::new(|p: &pos::Pos| p.manhattan_distance(&goal)),
             1 => Box::new(|p: &pos::Pos| p.quick_distance(&goal)),
             _ => Box::new(|p: &pos::Pos| p.euclidean_distance(&goal)),
         };
 
-        let result = astar(&start, method, heuristic, |p| *p == goal);
+        let result = astar(&start, |p| p.successors(grid), heuristic, |p| *p == goal);
+        
+        let mut path: Vec<(usize, usize)>;
+        let distance: f64;
+
+        if result.is_none(){
+            path = Vec::<(usize, usize)>::new();
+            distance = 0.0
+        }
+        else {
+            let unwrapped = result.unwrap();
+            distance = (unwrapped.1 as f64) / pos::MULTF64;
+            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
+            for pos in unwrapped.0 {
+                path.push((pos.0, pos.1))    
+            }
+        }
+        
+        Ok((path, distance))
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    fn find_path_influence(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
+        let start = pos::InfluencedPos(start.0, start.1);
+        let goal = pos::InfluencedPos(end.0, end.1);
+        let grid: &Vec<Vec<usize>> = &self.map;
+        let inf = self.normal_influence;
+        // let heuristic: Box<dyn Fn(&pos::InfluencedPos)->usize> = match possible_heuristic.unwrap_or(0) {
+        //     0 => Box::new(|p: &pos::InfluencedPos| p.manhattan_distance(&goal, self.normal_influence)),
+        //     1 => Box::new(|p: &pos::InfluencedPos| p.quick_distance(&goal, self.normal_influence)),
+        //     _ => Box::new(|p: &pos::InfluencedPos| p.euclidean_distance(&goal, self.normal_influence)),
+        // };
+
+        let result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, inf), |p| *p == goal);
         
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
@@ -175,7 +209,7 @@ impl PathFind {
     fn find_all_destinations(&self, start: (usize, usize)) -> PyResult<Vec<((usize, usize), f64)>> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let result = dijkstra_all(&start, |p| p.successors_no_influence(&grid));
+        let result = dijkstra_all(&start, |p| p.successors(&grid));
 
         let mut destination_collection: Vec<((usize, usize), f64)> = Vec::<((usize, usize), f64)>::with_capacity(result.len());
 
