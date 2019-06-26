@@ -1,21 +1,46 @@
 use pyo3::prelude::*;
 //use pyo3::wrap_pyfunction;
-use pathfinding::prelude::{astar, dijkstra_all};
+use pathfinding::prelude::{absdiff, astar, dijkstra_all};
+use std::cmp::{min, max};
 mod pos;
 
 
 
 #[pyclass]
 pub struct PathFind {
-    map: Vec<Vec<usize>>
+    map: Vec<Vec<usize>>,
+    width: usize,
+    height: usize
+}
+
+fn quick_distance(first: (usize, usize), other: (usize, usize)) -> usize {
+    let xd = absdiff(first.0, other.0);
+    let yd = absdiff(first.1, other.1);
+    let diag = min(xd, yd);
+    (xd + yd - diag - diag) * pos::MULT + diag * pos::SQRT2
 }
 
 #[pymethods]
 impl PathFind {
     #[new]
     fn new(obj: &PyRawObject, map: Vec<Vec<usize>>) {
-        obj.init(PathFind { map})
+        let width = map.len();
+        let height = map[0].len();
+        obj.init(PathFind { map, width, height})
     }
+
+    // object.width
+    #[getter(width)]
+    fn get_width(&self)-> PyResult<usize>{
+        Ok(self.width)
+    }
+
+    // object.height
+    #[getter(height)]
+    fn get_height(&self)-> PyResult<usize>{
+        Ok(self.height)
+    }
+
     // object.map
     #[getter(map)]
     fn get_map(&self)-> PyResult<Vec<Vec<usize>>>{
@@ -28,6 +53,7 @@ impl PathFind {
         self.map = value;
         Ok(())
     }
+
     // Creates a building on the grid that is not pathable
     // Position = center of building
     fn create_building(&mut self, position: (f32,f32), size: (usize, usize))
@@ -45,13 +71,63 @@ impl PathFind {
         w_start = (pos_x as f32 - (w as f32 / 2 as f32)).ceil() as usize;
         h_start = (pos_y as f32 - (h as f32 / 2 as f32)).ceil() as usize;
 
-
         for x in w_start..(w+w_start) {
             for y in h_start..(h+h_start){
                 grid[x][y] = 0;
             }
         }
         self.map = grid;
+    }
+
+    fn normalize_influence(&mut self, value: usize) {
+        let height = self.map[0].len();
+
+        for x in 0..self.map.len() {
+            for y in 0..height {
+                if self.map[x][y] > 0 {
+                    self.map[x][y] = value;
+                }
+            }
+        }
+    }
+    /// Finds the first reachable position within specified distance from the center point with lowest value
+    fn lowest_influence(&self, center: (f32, f32), distance: usize) -> PyResult<((usize, usize), f64)> {
+        Ok(self.inline_lowest_value(center, distance))
+    }
+
+    #[inline]
+    fn inline_lowest_value(&self, center: (f32, f32), distance: usize) -> ((usize, usize), f64) {
+        let pos_x: usize = center.0 as usize;
+        let pos_y: usize = center.1 as usize;
+
+        let w: usize = distance;
+        let h: usize = distance;
+        let w_start: usize = max(0, (pos_x as f32 - (w as f32 / 2 as f32)).ceil() as usize);
+        let h_start: usize = max(0, (pos_y as f32 - (h as f32 / 2 as f32)).ceil() as usize);
+        let w_end: usize = min(self.width, w + w_start);
+        let h_end: usize = min(self.height, h + h_start);
+
+        let mut min_value = std::usize::MAX;
+        let mut min_distance = std::usize::MAX;
+        let mut min_position = (pos_x, pos_y);
+        let target_pos = (pos_x, pos_y);
+
+        for x in w_start..w_end {
+            for y in h_start..h_end{
+                let new_val = self.map[x][y];
+                if new_val == 0 { continue; }
+
+                let distance = quick_distance((x,y), target_pos);
+                
+                if new_val < min_value || (new_val == min_value && distance < min_distance) {
+                    min_value = new_val;
+                    min_distance = distance;
+                    min_position = (x,y);
+                }
+            }
+        }
+
+        (min_position, min_distance as f64 / pos::MULTF64)
     }
   
     /// Find the path using influence values and returns the path and distance
