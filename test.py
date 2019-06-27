@@ -1,4 +1,4 @@
-import sc2pathlib
+import sc2pathlibp
 import time
 from typing import List
 
@@ -16,36 +16,40 @@ def read_maze(file_name: str) -> List[List[int]]:
     return final_maze
 
 maze = read_maze("tests/maze4x4.txt")
-pf = sc2pathlib.PathFind(maze)
+pf = sc2pathlibp.PathFinder(maze)
 print(pf.map)
 print(pf.width)
 print(pf.height)
 
 print(pf.find_path((0,0), (0,2)))
 pf.normalize_influence(100)
-print(pf.lowest_influence((2,2), 5))
+print(pf.lowest_influence_in_grid((2,2), 5))
 print(pf.find_path((0,0), (0,2)))
 
 maze = read_maze("tests/AutomatonLE.txt")
-pf = sc2pathlib.PathFind(maze)
+pf = sc2pathlibp.PathFinder(maze)
 pf.normalize_influence(10)
 
-result = pf.find_path((32, 51),(150, 129), 0)
+pf.heuristic_accuracy = 0
+result = pf.find_path((32, 51),(150, 129))
 print(f"path distance 0: {result[1]} for path: {result[0]}")
 
-result = pf.find_path((32, 51),(150, 129), 1)
+pf.heuristic_accuracy = 1
+result = pf.find_path((32, 51),(150, 129))
 print(f"path distance 1: {result[1]} for path: {result[0]}")
 
-result = pf.find_path((32, 51),(150, 129), 2)
+pf.heuristic_accuracy = 2
+result = pf.find_path((32, 51),(150, 129))
 print(f"path distance 2: {result[1]} for path: {result[0]}")
 
-result = pf.find_path_influence((32, 51),(150, 129), 0)
+pf.heuristic_accuracy = 0
+result = pf.find_path_influence((32, 51),(150, 129))
 print(f"path influenced distance 0: {result[1]} for path: {result[0]}")
-
-result = pf.find_path_influence((32, 51),(150, 129), 1)
+pf.heuristic_accuracy = 1
+result = pf.find_path_influence((32, 51),(150, 129))
 print(f"path influenced distance 1: {result[1]} for path: {result[0]}")
-
-result = pf.find_path_influence((32, 51),(150, 129), 2)
+pf.heuristic_accuracy = 2
+result = pf.find_path_influence((32, 51),(150, 129))
 print(f"path influenced distance 2: {result[1]} for path: {result[0]}")
 
 expansions = [(29, 65), (35, 34), 
@@ -60,13 +64,30 @@ expansions = [(29, 65), (35, 34),
 total_distance = 0
 ns_pf = time.perf_counter_ns()
 pf.normalize_influence(100)
+pf.heuristic_accuracy = 0
 
 for pos1 in expansions:
     for pos2 in expansions:
-        result = pf.find_path(pos1, pos2, 2)
+        result = pf.find_path(pos1, pos2)
         total_distance += result[1]
 
 ns_pf = time.perf_counter_ns() - ns_pf
 
 print(f"pathfinding took {ns_pf / 1000 / 1000} ms. Total distance {total_distance}")
-print(f"noraml influence: {pf.normal_influence}")
+
+ns_pf = time.perf_counter_ns()
+pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 50)
+ns_pf = time.perf_counter_ns() - ns_pf
+print(f"adding influence took {ns_pf / 1000 / 1000} ms.")
+
+pf.normalize_influence(100)
+
+ns_pf = time.perf_counter_ns()
+pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 50)
+ns_pf = time.perf_counter_ns() - ns_pf
+print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
+
+result = pf.find_path_influence((29, 65), (154, 114))
+print(pf.map)
+pf.plot(result[0])
+input("Press Enter to continue...")

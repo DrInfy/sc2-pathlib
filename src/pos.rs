@@ -15,8 +15,8 @@ impl Pos {
     }
 
     pub fn euclidean_distance(&self, other: &Pos) -> usize {
-        let a = (self.0 - other.0);
-        let b = (self.1 - other.1);
+        let a = self.0 - other.0;
+        let b = self.1 - other.1;
         let dist2 = a * a + b * b;
         ((dist2 as f64).sqrt() * MULTF64) as usize
 

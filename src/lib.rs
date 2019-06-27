@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 //use pyo3::wrap_pyfunction;
-use pathfinding::prelude::{absdiff, astar, dijkstra_all};
+use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use std::cmp::{min, max};
 mod pos;
 
@@ -45,7 +45,7 @@ impl PathFind {
 
     // object.normal_influence
     #[getter(normal_influence)]
-    fn get_normal_influenceidth(&self)-> PyResult<usize>{
+    fn get_normal_influence(&self)-> PyResult<usize>{
         Ok(self.normal_influence)
     }
 
@@ -88,17 +88,96 @@ impl PathFind {
     }
 
     fn normalize_influence(&mut self, value: usize) {
-        let height = self.map[0].len();
         self.normal_influence = value;
         
-        for x in 0..self.map.len() {
-            for y in 0..height {
+        for x in 0..self.width {
+            for y in 0..self.height {
                 if self.map[x][y] > 0 {
                     self.map[x][y] = value;
                 }
             }
         }
     }
+
+    /// Adds influence based on euclidean distance
+    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+        let mult = 1.0 / (distance * pos::MULTF64 as f32);
+
+        for x in 0..self.width {
+            for y in 0..self.height {
+                if self.map[x][y] > 0 {
+                    let mut added_value: usize = 0;
+
+                    for position in &positions {
+                        let value = max * (1.0 - (quick_distance(*position, (x, y)) as f32) * mult);
+                        if value > 0.0 {
+                            added_value += value as usize;
+
+                        }
+                    }
+
+                    self.map[x][y] += added_value;
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Adds influence based on walk distance
+    fn add_walk_influence(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+        let mult = 1.0 / distance;
+        let max_int = max as usize;
+
+        for position in &positions {
+            let destinations = self.find_destinations_in_inline(*position, distance);
+            self.map[position.0][position.1] += max_int;
+
+            for destination in destinations {
+                let end_point = destination.0;
+                let current_distance = destination.1;
+                let value = max * (1.0 - current_distance * mult);
+
+                if value > 0.0 {
+                    self.map[end_point.0][end_point.1] += value as usize
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Finds the first reachable position within specified walking distance from the center point with lowest value
+    fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> PyResult<((usize, usize), f64)> {
+        Ok(self.lowest_influence_walk_inline(center, distance))
+    }
+
+    #[inline]
+    fn lowest_influence_walk_inline(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
+        let destinations = self.find_destinations_in_inline(center, distance);
+
+        let mut min_value = std::usize::MAX;
+        let mut min_distance = std::f64::MAX;
+        let mut min_position = center.clone();
+
+        for destination in destinations {
+            let pos = destination.0;
+            let new_val = self.map[pos.0][pos.1];
+            if new_val == 0 { continue; }
+
+            let distance = destination.1;
+            
+            if new_val < min_value || (new_val == min_value && distance < min_distance) {
+                min_value = new_val;
+                min_distance = distance;
+                min_position = pos;
+            }
+        }
+        
+        (min_position, min_distance)
+    }
+    
+
     /// Finds the first reachable position within specified distance from the center point with lowest value
     fn lowest_influence(&self, center: (f32, f32), distance: usize) -> PyResult<((usize, usize), f64)> {
         Ok(self.inline_lowest_value(center, distance))
@@ -144,12 +223,6 @@ impl PathFind {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let goal: pos::Pos = pos::Pos(end.0, end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-
-        let heuristic: Box<dyn Fn(&pos::Pos)->usize> = match possible_heuristic.unwrap_or(0) {
-            0 => Box::new(|p: &pos::Pos| p.manhattan_distance(&goal)),
-            1 => Box::new(|p: &pos::Pos| p.quick_distance(&goal)),
-            _ => Box::new(|p: &pos::Pos| p.euclidean_distance(&goal)),
-        };
 
         let result: Option<(Vec<pos::Pos>, usize)>;
         match possible_heuristic.unwrap_or(0) {
@@ -227,6 +300,34 @@ impl PathFind {
         }
 
         Ok(destination_collection)
+    }
+
+    /// Finds all reachable destinations from selected start point. Ignores influence.
+    fn find_destinations_in(&self, start: (usize, usize), distance: f64 ) -> PyResult<Vec<((usize, usize), f64)>> {
+        Ok(self.find_destinations_in_inline(start, distance))
+    }
+
+    #[inline]
+    fn find_destinations_in_inline(&self, start: (usize, usize), distance: f64 ) -> Vec<((usize, usize), f64)> {
+        let start: pos::Pos = pos::Pos(start.0, start.1);
+        let grid: &Vec<Vec<usize>> = &self.map;
+        let u_distance =  (distance * pos::MULTF64) as usize;
+
+        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.quick_distance(&start) > u_distance);
+
+        let hash_map = result.0;
+        let mut destination_collection: Vec<((usize, usize), f64)> = Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+
+        for found_path in hash_map {
+            let x = (found_path.0).0;
+            let y = (found_path.0).1;
+            //let x = ((found_path.1).0).0;
+            //let y = ((found_path.1).0).1;
+            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            destination_collection.push(((x, y), d));
+        }
+
+        destination_collection
     }
 }
 

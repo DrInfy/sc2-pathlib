@@ -10,3 +10,4 @@ Cargo.lock
 **/*.rs.bk
 sc2pathlib.pyd
 sc2pathlib.so
+sc2pathlibp/__pycache__/
