@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use std::cmp::{min, max};
 mod pos;
+mod rectangle;
 
 
 
@@ -62,29 +63,59 @@ impl PathFind {
         Ok(())
     }
 
-    // Creates a building on the grid that is not pathable
-    // Position = center of building
-    fn create_building(&mut self, position: (f32,f32), size: (usize, usize))
-    {
-        let mut grid: Vec<Vec<usize>> = self.map.clone();
+    // Creates a block on the grid that is not pathable
+    // center = center of building
+    fn create_block(&mut self, center: (f32,f32), size: (usize, usize)) {
         
-        let pos_x: f32 = position.0;
-        let pos_y: f32 = position.1;
+        let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
-        let w: usize = size.0;
-        let h: usize = size.1;
-        let w_start: usize;
-        let h_start: usize;
-
-        w_start = (pos_x as f32 - (w as f32 / 2 as f32)).ceil() as usize;
-        h_start = (pos_y as f32 - (h as f32 / 2 as f32)).ceil() as usize;
-
-        for x in w_start..(w+w_start) {
-            for y in h_start..(h+h_start){
-                grid[x][y] = 0;
+        for x in rect.x..rect.x_end {
+            for y in rect.y..rect.y_end{
+                self.map[x][y] = 0;
             }
         }
-        self.map = grid;
+    }
+
+    // Creates a block on the grid that is not pathable
+    // center = center of building
+    fn create_blocks(&mut self, centers: Vec<(f32,f32)>, size: (usize, usize)) {
+        
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end{
+                    self.map[x][y] = 0;
+                }
+            }
+        }
+    }
+
+    // Removes a block on the grid and makes it pathable
+    // center = center of block
+    fn remove_block(&mut self, center: (f32,f32), size: (usize, usize)) {
+        let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
+
+        for x in rect.x..rect.x_end {
+            for y in rect.y..rect.y_end{
+                self.map[x][y] = self.normal_influence;
+            }
+        }
+    }
+
+    // Removes multiple blocks on the grid and makes it pathable
+    // center = center of block
+    fn remove_blocks(&mut self, centers: Vec<(f32,f32)>, size: (usize, usize)) {
+        
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end{
+                    self.map[x][y] = self.normal_influence;
+                }
+            }
+        }
     }
 
     fn normalize_influence(&mut self, value: usize) {
