@@ -5,6 +5,10 @@ import numpy as np
 from typing import Union, List, Tuple
 from math import floor
 
+def to_float2(original: Tuple[int, int]) -> Tuple[float, float]:
+    return (original[0] + 0.5, original[1] + 0.5)
+
+
 class PathFinder():
     def __init__(self, maze: Union[List[List[int]], np.array]):
         """ 
@@ -23,23 +27,46 @@ class PathFinder():
         self._path_find.normalize_influence(value)
     
     @property
-    def width(self):
-        self._path_find.width
+    def width(self) -> int:
+        """
+        :return: Width of the defined map
+        """
+        return self._path_find.width
     
     @property
-    def height(self):
-        self._path_find.height
+    def height(self) -> int:
+        """
+        :return: Height of the defined map
+        """
+        return self._path_find.height
 
     @property
-    def map(self):
-        self._path_find.map
+    def map(self) -> List[List[int]]:
+        """
+        :return: map as list of lists [x][y] in python readable format
+        """
+        return self._path_find.map
 
     def find_path(self, start: (float, float), end: (float, float)) -> Tuple[List[Tuple[int, int]], float]:
+        """
+        Finds a path ignoring influence.
+
+        :param start: Start position in float tuple
+        :param end: Start position in float tuple
+        :return: Tuple of points and total distance.
+        """
         start_int = (floor(start[0]), floor(start[1]))
         end_int = (floor(end[0]), floor(end[1]))
         return self._path_find.find_path(start_int, end_int, self.heuristic_accuracy)
     
     def find_path_influence(self, start: (float, float), end: (float, float)) -> (List[Tuple[int, int]], float):
+        """
+        Finds a path that takes influence into account
+
+        :param start: Start position in float tuple
+        :param end: Start position in float tuple
+        :return: Tuple of points and total distance including influence.
+        """
         start_int = (floor(start[0]), floor(start[1]))
         end_int = (floor(end[0]), floor(end[1]))
         return self._path_find.find_path_influence(start_int, end_int, self.heuristic_accuracy)
@@ -66,15 +93,24 @@ class PathFinder():
         
         self._path_find.add_walk_influence(list, value, distance)
 
-    def plot(self, path: List[Tuple[int, int]]):
+
+
+    def plot(self, path: List[Tuple[int, int]], image_name: str = "map", resize: int = 4):
         """
+        Uses cv2 to draw current pathing grid.
+        
         requires opencv-python
+
+        :param path: list of points to colorize
+        :param image_name: name of the window to show the image in. Unique names update only when used multiple times.
+        :param resize: multiplier for resizing the image
+        :return: None
         """
         import cv2
         image = np.array(self._path_find.map, dtype = np.uint8)
         for point in path:
             image[point] = 255
         image = np.rot90(image, 1)
-        resized = cv2.resize(image, dsize=None, fx=4, fy=4)
-        cv2.imshow(f"influence map", resized);
-        cv2.waitKey(1);
+        resized = cv2.resize(image, dsize=None, fx=resize, fy=resize)
+        cv2.imshow(image_name, resized)
+        cv2.waitKey(1)
