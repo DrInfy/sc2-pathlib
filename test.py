@@ -76,18 +76,20 @@ ns_pf = time.perf_counter_ns() - ns_pf
 print(f"pathfinding took {ns_pf / 1000 / 1000} ms. Total distance {total_distance}")
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 50)
+pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 20)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence took {ns_pf / 1000 / 1000} ms.")
 
 pf.normalize_influence(100)
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 50)
+pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 20)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
 
 result = pf.find_path_influence((29, 65), (154, 114))
-print(pf.map)
+#print(pf.map)
+pf.plot(result[0])
+pf.create_block([(11.5,11.5), (21.5,21.5), (31.5,31.5), (31.5,31.5)], (2, 1))
 pf.plot(result[0])
 input("Press Enter to continue...")

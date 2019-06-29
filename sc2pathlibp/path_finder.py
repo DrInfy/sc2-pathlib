@@ -47,17 +47,17 @@ class PathFinder():
         """
         return self._path_find.map
 
-    def create_block(self, center: Union[Tuple[float, float], List[Tuple[float, float]]], size: Tuple[int, int])
+    def create_block(self, center: Union[Tuple[float, float], List[Tuple[float, float]]], size: Tuple[int, int]):
         if isinstance(center, list):
-            self._path_find.create_block(center, size)
-        else:
             self._path_find.create_blocks(center, size)
-
-    def remove_block(self, center: Union[Tuple[float, float], List[Tuple[float, float]]], size: Tuple[int, int])
-        if isinstance(center, list):
-            self._path_find.remove_block(center, size)
         else:
+            self._path_find.create_block(center, size)
+
+    def remove_block(self, center: Union[Tuple[float, float], List[Tuple[float, float]]], size: Tuple[int, int]):
+        if isinstance(center, list):
             self._path_find.remove_blocks(center, size)
+        else:
+            self._path_find.remove_block(center, size)
 
     def find_path(self, start: (float, float), end: (float, float)) -> Tuple[List[Tuple[int, int]], float]:
         """
