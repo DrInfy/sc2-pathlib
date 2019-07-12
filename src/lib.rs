@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use std::cmp::{min, max};
 mod pos;
+mod pos_large;
 mod rectangle;
 
 
@@ -15,11 +16,17 @@ pub struct PathFind {
     normal_influence: usize
 }
 
-fn quick_distance(first: (usize, usize), other: (usize, usize)) -> usize {
-    let xd = absdiff(first.0, other.0);
-    let yd = absdiff(first.1, other.1);
-    let diag = min(xd, yd);
-    (xd + yd - diag - diag) * pos::MULT + diag * pos::SQRT2
+#[inline]
+pub fn octile_distance(first: (usize, usize), other: (usize, usize)) -> usize{
+    let dx = absdiff(first.0, other.0);
+    let dy = absdiff(first.1, other.1);
+
+    if dx > dy{
+        pos::MULT * dx + pos::DIAGONAL_MINUS_CARDINAL * dy
+    }
+    else{
+        pos::MULT * dy + pos::DIAGONAL_MINUS_CARDINAL * dx
+    }
 }
 
 #[pymethods]
@@ -140,10 +147,33 @@ impl PathFind {
                     let mut added_value: usize = 0;
 
                     for position in &positions {
-                        let value = max * (1.0 - (quick_distance(*position, (x, y)) as f32) * mult);
+                        let value = max * (1.0 - (octile_distance(*position, (x, y)) as f32) * mult);
                         if value > 0.0 {
                             added_value += value as usize;
+                        }
+                    }
 
+                    self.map[x][y] += added_value;
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Adds influence based on euclidean distance
+    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+        let value = max as usize;
+        let mult_distance = distance * pos::MULTF64 as f32;
+
+        for x in 0..self.width {
+            for y in 0..self.height {
+                if self.map[x][y] > 0 {
+                    let mut added_value: usize = 0;
+
+                    for position in &positions {
+                        if (octile_distance(*position, (x, y)) as f32) < mult_distance {
+                            added_value += value;
                         }
                     }
 
@@ -161,6 +191,11 @@ impl PathFind {
         let max_int = max as usize;
 
         for position in &positions {
+
+            if self.map[position.0][position.1] == 0 {
+                continue;   
+            }
+
             let destinations = self.find_destinations_in_inline(*position, distance);
             self.map[position.0][position.1] += max_int;
 
@@ -169,9 +204,38 @@ impl PathFind {
                 let current_distance = destination.1;
                 let value = max * (1.0 - current_distance * mult);
 
-                if value > 0.0 {
+                if current_distance < distance {
                     self.map[end_point.0][end_point.1] += value as usize
                 }
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Adds influence based on walk distance
+    fn add_walk_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+        let max_int = max as usize;
+
+        for position in &positions {
+            if self.map[position.0][position.1] == 0 {
+                continue;   
+            }
+
+            let destinations = self.find_destinations_in_inline(*position, distance);
+
+            
+            self.map[position.0][position.1] += max_int;
+
+            for destination in destinations {
+                let end_point = destination.0;
+                self.map[end_point.0][end_point.1] += max_int
+
+                // let current_distance = destination.1;
+                // // let value = max * (1.0 - current_distance * mult);
+
+                // if current_distance < distance {
+                // }
             }
         }
         
@@ -236,7 +300,7 @@ impl PathFind {
                 let new_val = self.map[x][y];
                 if new_val == 0 { continue; }
 
-                let distance = quick_distance((x,y), target_pos);
+                let distance = octile_distance((x,y), target_pos);
                 
                 if new_val < min_value || (new_val == min_value && distance < min_distance) {
                     min_value = new_val;
@@ -258,7 +322,39 @@ impl PathFind {
         let result: Option<(Vec<pos::Pos>, usize)>;
         match possible_heuristic.unwrap_or(0) {
             0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.quick_distance(&goal),  |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal),  |p| *p == goal),
+            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal),  |p| *p == goal),
+        };
+        
+        let mut path: Vec<(usize, usize)>;
+        let distance: f64;
+
+        if result.is_none(){
+            path = Vec::<(usize, usize)>::new();
+            distance = 0.0
+        }
+        else {
+            let unwrapped = result.unwrap();
+            distance = (unwrapped.1 as f64) / pos::MULTF64;
+            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
+            for pos in unwrapped.0 {
+                path.push((pos.0, pos.1))    
+            }
+        }
+        
+        Ok((path, distance))
+    }
+
+    /// Find the shortest path values without considering influence and returns the path and distance
+    fn find_path_large(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
+        let start: pos_large::PosLarge = pos_large::PosLarge(start.0, start.1);
+        let goal: pos_large::PosLarge = pos_large::PosLarge(end.0, end.1);
+        let grid: &Vec<Vec<usize>> = &self.map;
+
+        let result: Option<(Vec<pos_large::PosLarge>, usize)>;
+        match possible_heuristic.unwrap_or(0) {
+            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal), |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal),  |p| *p == goal),
             _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal),  |p| *p == goal),
         };
         
@@ -292,7 +388,41 @@ impl PathFind {
 
         match possible_heuristic.unwrap_or(0) {
             0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, infl), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.quick_distance(&goal, infl),  |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal, infl),  |p| *p == goal),
+            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal, infl),  |p| *p == goal),
+        };
+        
+        let mut path: Vec<(usize, usize)>;
+        let distance: f64;
+
+        if result.is_none(){
+            path = Vec::<(usize, usize)>::new();
+            distance = 0.0
+        }
+        else {
+            let unwrapped = result.unwrap();
+            distance = (unwrapped.1 as f64) / pos::MULTF64;
+            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
+            for pos in unwrapped.0 {
+                path.push((pos.0, pos.1))    
+            }
+        }
+        
+        Ok((path, distance))
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    fn find_path_influence_large(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>) -> PyResult<(Vec<(usize, usize)>, f64)> {
+        let start = pos_large::InfluencedPosLarge(start.0, start.1);
+        let goal = pos_large::InfluencedPosLarge(end.0, end.1);
+        let grid: &Vec<Vec<usize>> = &self.map;
+        let infl = self.normal_influence;
+
+        let result: Option<(Vec<pos_large::InfluencedPosLarge>, usize)>;
+
+        match possible_heuristic.unwrap_or(0) {
+            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, infl), |p| *p == goal),
+            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal, infl),  |p| *p == goal),
             _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal, infl),  |p| *p == goal),
         };
         
@@ -344,7 +474,7 @@ impl PathFind {
         let grid: &Vec<Vec<usize>> = &self.map;
         let u_distance =  (distance * pos::MULTF64) as usize;
 
-        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.quick_distance(&start) > u_distance);
+        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f64)> = Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());

@@ -16,7 +16,7 @@ class PathFinder():
         Initialization should be done with array consisting values of 0 and 1.
         """
         self._path_find = PathFind(maze)
-        self.heuristic_accuracy = 0
+        self.heuristic_accuracy = 1  # Octile distance
     
     def normalize_influence(self, value: int):
         """ 
@@ -59,28 +59,34 @@ class PathFinder():
         else:
             self._path_find.remove_block(center, size)
 
-    def find_path(self, start: (float, float), end: (float, float)) -> Tuple[List[Tuple[int, int]], float]:
+    def find_path(self, start: (float, float), end: (float, float), large: bool = False) -> Tuple[List[Tuple[int, int]], float]:
         """
         Finds a path ignoring influence.
 
         :param start: Start position in float tuple
         :param end: Start position in float tuple
+        :param large: Unit is large and requires path to have width of 2 to pass
         :return: Tuple of points and total distance.
         """
         start_int = (floor(start[0]), floor(start[1]))
         end_int = (floor(end[0]), floor(end[1]))
+        if large:
+            return self._path_find.find_path_large(start_int, end_int, self.heuristic_accuracy)
         return self._path_find.find_path(start_int, end_int, self.heuristic_accuracy)
     
-    def find_path_influence(self, start: (float, float), end: (float, float)) -> (List[Tuple[int, int]], float):
+    def find_path_influence(self, start: (float, float), end: (float, float), large: bool = False) -> (List[Tuple[int, int]], float):
         """
         Finds a path that takes influence into account
 
         :param start: Start position in float tuple
         :param end: Start position in float tuple
+        :param large: Unit is large and requires path to have width of 2 to pass
         :return: Tuple of points and total distance including influence.
         """
         start_int = (floor(start[0]), floor(start[1]))
         end_int = (floor(end[0]), floor(end[1]))
+        if large:
+            return self._path_find.find_path_influence_large(start_int, end_int, self.heuristic_accuracy)
         return self._path_find.find_path_influence(start_int, end_int, self.heuristic_accuracy)
 
     def safest_spot(self, destination_center: (float, float), walk_distance: float) -> (Tuple[int, int], float):
@@ -91,20 +97,25 @@ class PathFinder():
         destination_int = (floor(destination_center[0]), floor(destination_center[1]))
         return self._path_find.lowest_influence(destination_int, radius)
     
-    def add_influence(self, points: List[Tuple[float, float]], value: float, distance: float):
+    def add_influence(self, points: List[Tuple[float, float]], value: float, distance: float, flat: bool = False):
         list = []
         for point in points:
             list.append((floor(point[0]), floor(point[1])))
         
-        self._path_find.add_influence(list, value, distance)
+        if flat:
+            self._path_find.add_influence_flat(list, value, distance)
+        else:
+            self._path_find.add_influence(list, value, distance)
 
-    def add_influence_walk(self, points: List[Tuple[float, float]], value: float, distance: float):
+    def add_influence_walk(self, points: List[Tuple[float, float]], value: float, distance: float, flat: bool = False):
         list = []
         for point in points:
             list.append((floor(point[0]), floor(point[1])))
         
-        self._path_find.add_walk_influence(list, value, distance)
-
+        if flat:
+            self._path_find.add_walk_influence_flat(list, value, distance)
+        else:
+            self._path_find.add_walk_influence(list, value, distance)
 
 
     def plot(self, path: List[Tuple[int, int]], image_name: str = "map", resize: int = 4):

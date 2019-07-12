@@ -12,7 +12,6 @@ def read_maze(file_name: str) -> List[List[int]]:
         final_maze.append(maze_line)
         for x in range(0, len(lines)):
             maze_line.append(int(lines[x][y]))
-
     return final_maze
 
 maze = read_maze("tests/maze4x4.txt")
@@ -64,26 +63,27 @@ expansions = [(29, 65), (35, 34),
 total_distance = 0
 ns_pf = time.perf_counter_ns()
 pf.normalize_influence(100)
-pf.heuristic_accuracy = 0
+pf.heuristic_accuracy = 1
 
 for pos1 in expansions:
     for pos2 in expansions:
-        result = pf.find_path(pos1, pos2)
+        result = pf.find_path(pos1, pos2, False)
         total_distance += result[1]
 
 ns_pf = time.perf_counter_ns() - ns_pf
 
+
 print(f"pathfinding took {ns_pf / 1000 / 1000} ms. Total distance {total_distance}")
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 20)
+pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 10, True)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence took {ns_pf / 1000 / 1000} ms.")
 
 pf.normalize_influence(100)
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 20)
+pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 10, True)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
 
