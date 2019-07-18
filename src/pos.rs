@@ -1,5 +1,4 @@
 use pathfinding::prelude::absdiff;
-use std::cmp::min;
 
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
@@ -24,8 +23,6 @@ impl Pos {
         let b = self.1 - other.1;
         let dist2 = a * a + b * b;
         ((dist2 as f64).sqrt() * MULTF64) as usize
-
-        // ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f64).sqrt() * MULTF64) as usize
     }
 
     #[inline]

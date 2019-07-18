@@ -63,7 +63,7 @@ expansions = [(29, 65), (35, 34),
 total_distance = 0
 ns_pf = time.perf_counter_ns()
 pf.normalize_influence(100)
-pf.heuristic_accuracy = 1
+pf.heuristic_accuracy = 2
 
 for pos1 in expansions:
     for pos2 in expansions:
@@ -76,14 +76,14 @@ ns_pf = time.perf_counter_ns() - ns_pf
 print(f"pathfinding took {ns_pf / 1000 / 1000} ms. Total distance {total_distance}")
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 10, True)
+pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 10, False)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence took {ns_pf / 1000 / 1000} ms.")
 
 pf.normalize_influence(100)
 
 ns_pf = time.perf_counter_ns()
-pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 10, True)
+pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 10, False)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
 

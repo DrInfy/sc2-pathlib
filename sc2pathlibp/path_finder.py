@@ -46,7 +46,10 @@ class PathFinder():
         :return: map as list of lists [x][y] in python readable format
         """
         return self._path_find.map
-
+        
+    def set_map(self, data: List[List[int]]):
+        self._path_find.map = data
+    
     def create_block(self, center: Union[Tuple[float, float], List[Tuple[float, float]]], size: Tuple[int, int]):
         if isinstance(center, list):
             self._path_find.create_blocks(center, size)
@@ -117,6 +120,19 @@ class PathFinder():
         else:
             self._path_find.add_walk_influence(list, value, distance)
 
+    def find_low_inside_walk(self, start: (float, float), target: (float, float), distance: Union[int, float]) -> (Tuple[float, float], float):
+        """
+        Finds a compromise where low influence matches with close position to the start position.
+
+        This is intended for finding optimal position for unit with more range to find optimal position to fight from
+        :param start: This is the starting position of the unit with more range
+        :param target: Target that the optimal position should be optimized for
+        :param distance: This should represent the firing distance of the unit with more range
+        :return: Tuple for position and influence distance to reach the destination
+        """
+        # start_int = (floor(start[0]), floor(start[1]))
+        # target_int = (floor(target[0]), floor(target[1]))
+        return self._path_find.find_low_inside_walk(start, target, distance)
 
     def plot(self, path: List[Tuple[int, int]], image_name: str = "map", resize: int = 4):
         """
