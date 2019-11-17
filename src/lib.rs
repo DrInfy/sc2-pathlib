@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 //use pyo3::wrap_pyfunction;
 use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
-use std::cmp::{min, max};
+// use std::cmp::{min, max};
 mod pos;
 mod pos_large;
 mod rectangle;
@@ -11,6 +11,7 @@ mod angles;
 #[pyclass]
 pub struct PathFind {
     map: Vec<Vec<usize>>,
+    original_map: Vec<Vec<usize>>,
     width: usize,
     height: usize,
     normal_influence: usize,
@@ -49,12 +50,13 @@ impl PathFind {
     #[new]
     fn new(obj: &PyRawObject, map: Vec<Vec<usize>>) {
         let width = map.len();
+        let original_map = map.clone();
         let height = map[0].len();
         let normal_influence: usize = 1;
         let auto_correct: bool = true;
         let free_finder = search_grid::FreeFinder::new();
 
-        obj.init(PathFind { map, width, height, normal_influence, auto_correct, free_finder })
+        obj.init(PathFind { map, original_map, width, height, normal_influence, auto_correct, free_finder })
     }
 
     // object.width
@@ -98,6 +100,11 @@ impl PathFind {
     #[setter(auto_correct)]
     fn set_auto_correct(&mut self, value:bool) -> PyResult<()> {
         self.auto_correct = value;
+        Ok(())
+    }
+
+    fn reset(&mut self) -> PyResult<()> {
+        self.map = self.original_map.clone();
         Ok(())
     }
 

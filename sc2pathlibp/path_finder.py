@@ -47,6 +47,12 @@ class PathFinder():
         """
         return self._path_find.map
         
+    def reset(self):
+        """
+        Reset the pathfind map data to it's original state
+        """
+        self._path_find.reset()
+
     def set_map(self, data: List[List[int]]):
         self._path_find.map = data
     
