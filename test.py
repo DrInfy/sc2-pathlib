@@ -89,6 +89,8 @@ print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
 
 result = pf.find_path_influence((29, 65), (154, 114))
 #print(pf.map)
+# pf.reset()
+# pf.normalize_influence(100)
 pf.plot(result[0])
 pf.create_block([(11.5,11.5), (21.5,21.5), (31.5,31.5), (31.5,31.5)], (2, 1))
 pf.plot(result[0])
