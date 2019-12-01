@@ -1,6 +1,6 @@
 [package]
 name = "sc2pathlib"
-version = "0.1.0"
+version = "0.3.1"
 edition = "2018"
 
 [lib]
@@ -8,8 +8,8 @@ name = "sc2pathlib"
 crate-type = ["cdylib"]
 
 [dependencies.pyo3]
-version = "0.8.1"
+version = "0.8.2"
 features = ["extension-module"]
 
 [dependencies]
-pathfinding = "1.1.12"
+pathfinding = "2.0.0"
