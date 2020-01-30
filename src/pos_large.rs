@@ -29,14 +29,13 @@ impl PosLarge {
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &PosLarge) -> usize{
+    pub fn octile_distance(&self, other: &PosLarge) -> usize {
         let dx = absdiff(self.0, other.0);
         let dy = absdiff(self.1, other.1);
 
-        if dx > dy{
+        if dx > dy {
             MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
-        }
-        else{
+        } else {
             MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
         }
     }
@@ -80,7 +79,7 @@ impl PosLarge {
             }
 
             if val_up {
-                val_left_up  = grid[x - 1][y - 1] > 0;
+                val_left_up = grid[x - 1][y - 1] > 0;
             }
         }
 
@@ -150,14 +149,13 @@ impl InfluencedPosLarge {
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &InfluencedPosLarge, normal_influence: usize) -> usize{
+    pub fn octile_distance(&self, other: &InfluencedPosLarge, normal_influence: usize) -> usize {
         let dx = absdiff(self.0, other.0);
         let dy = absdiff(self.1, other.1);
 
-        if dx > dy{
+        if dx > dy {
             (MULT * dx + DIAGONAL_MINUS_CARDINAL * dy) * normal_influence
-        }
-        else{
+        } else {
             (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * normal_influence
         }
     }
@@ -165,7 +163,6 @@ impl InfluencedPosLarge {
     pub fn successors(&self, grid: &Vec<Vec<usize>>) -> Vec<(InfluencedPosLarge, usize)> {
         let &InfluencedPosLarge(x, y) = self;
         let mut arr = Vec::<(InfluencedPosLarge, usize)>::with_capacity(8);
-
 
         let mut val_left: usize = 0;
         let mut val_down: usize = 0;
@@ -199,12 +196,12 @@ impl InfluencedPosLarge {
             }
 
             if val_up > 0 {
-                val_left_up  = grid[x - 1][y - 1];
+                val_left_up = grid[x - 1][y - 1];
             }
         }
 
         if val_right > 0 {
-            if val_down  > 0 {
+            if val_down > 0 {
                 val_right_down = grid[x + 1][y - 1];
             }
 
@@ -217,7 +214,7 @@ impl InfluencedPosLarge {
             arr.push((InfluencedPosLarge(x, y + 1), val_up * MULT));
         }
 
-        if val_down > 0 && (val_left_down  > 0|| val_right_down > 0) {
+        if val_down > 0 && (val_left_down > 0 || val_right_down > 0) {
             arr.push((InfluencedPosLarge(x, y - 1), val_down * MULT));
         }
 
@@ -225,7 +222,7 @@ impl InfluencedPosLarge {
             arr.push((InfluencedPosLarge(x - 1, y), val_left * MULT));
         }
 
-        if val_right  > 0 && (val_right_up > 0 || val_right_down > 0) {
+        if val_right > 0 && (val_right_up > 0 || val_right_down > 0) {
             arr.push((InfluencedPosLarge(x + 1, y), val_right * MULT));
         }
 

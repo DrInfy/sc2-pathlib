@@ -1,0 +1,88 @@
+name: RustBuild
+on: [push]
+
+jobs:
+  build:
+    name: Build release
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        rust: [nightly]
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    # https://github.com/actions-rs/toolchain
+    - uses: actions/checkout@v1
+
+    # Cache
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly-2019-11-01
+        override: true
+
+    - name: Run cargo check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+
+    - name: Run clippy
+      run: |
+        rustup component add clippy
+        cargo clippy
+
+    - name: Test
+      run: cargo test --verbose --release
+      if: matrix.os == 'windows-latest'
+
+    - name: Bench
+      run: cargo bench
+      if: matrix.os == 'windows-latest'
+
+    - name: Build
+      run: cargo build --verbose --release
+
+    - name: Create artifact directory
+      run: mkdir artifacts
+
+    # TODO only one .so file needs to be built and it can be run from any python version on the linux distribution, and this probably also works on mac
+    - name: Create archive for Linux
+      run: |
+        sudo apt-get install tree
+        tree target/release
+        mv ./target/release/libsc2pathlib.so ./artifacts/sc2pathlib.so
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
+
+    - name: Create archive for Windows
+      run: |
+        dir target/release
+        dir
+        python ./rename_output.py ${{ matrix.python-version }}
+      if: matrix.os == 'windows-latest'
+
+    # See - https://github.com/actions/upload-artifact/issues/39
+    - uses: actions/upload-artifact@v1
+      name: Upload archive
+      with:
+        name: ${{ matrix.os }}_python${{ matrix.python-version }}
+        path: artifacts/
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest'
