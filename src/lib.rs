@@ -707,7 +707,7 @@ mod tests{
         let path_find = get_pathfind("tests/AutomatonLE.txt");
         let r = path_find.find_path((32, 51),(150, 118),Some(0));
         let (_, distance) = r.unwrap();
-        assert!(distance > 0_f64);
+        assert!(distance == 147.1656);
     }
 
     #[test]
@@ -715,7 +715,7 @@ mod tests{
         let path_find = get_pathfind("tests/maze4x4.txt");
         let r = path_find.find_path((0, 0), (3, 3),Some(0));
         let (_, distance) = r.unwrap();
-        assert!(distance > 0_f64);
+        assert!(distance == 6.0);
     }
 
     #[test]
@@ -723,7 +723,7 @@ mod tests{
         let path_find = get_pathfind("tests/empty10x10.txt");
         let r = path_find.find_path((0, 0),(8, 9),Some(0));
         let (_, distance) = r.unwrap();
-        assert!(distance > 0_f64);
+        assert!(distance == 12.3136);
     }
 
     #[bench]
