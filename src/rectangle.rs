@@ -19,8 +19,8 @@ impl Rectangle {
 
         let w: usize = size.0;
         let h: usize = size.1;
-        let x: usize = max(0, (pos_x as f32 - (w as f32 / 2 as f32)).ceil() as usize);
-        let y: usize = max(0, (pos_y as f32 - (h as f32 / 2 as f32)).ceil() as usize);
+        let x: usize = max(0, (pos_x as f32 - (w as f32 / 2_f32)).ceil() as usize);
+        let y: usize = max(0, (pos_y as f32 - (h as f32 / 2_f32)).ceil() as usize);
         let x_end : usize = min(width, w + x);
         let y_end : usize = min(height, h + y);
 
@@ -33,8 +33,8 @@ impl Rectangle {
 
         let w: usize = size.0;
         let h: usize = size.1;
-        let x: usize = f32::max(0.0, (pos_x as f32 - (w as f32 / 2 as f32)).ceil()) as usize;
-        let y: usize = f32::max(0.0, (pos_y as f32 - (h as f32 / 2 as f32)).ceil()) as usize;
+        let x: usize = f32::max(0.0, (pos_x as f32 - (w as f32 / 2_f32)).ceil()) as usize;
+        let y: usize = f32::max(0.0, (pos_y as f32 - (h as f32 / 2_f32)).ceil()) as usize;
         let x_end : usize = min(width, w + x);
         let y_end : usize = min(height, h + y);
 

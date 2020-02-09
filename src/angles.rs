@@ -1,4 +1,4 @@
-const pi2: f64 = std::f64::consts::PI * 2.0;
+const PI2: f64 = std::f64::consts::PI * 2.0;
 
 #[inline]
 pub fn angle_between(first: (usize, usize), other: (usize, usize)) -> f64 {
@@ -39,13 +39,13 @@ pub fn point_angle(point: (f64, f64)) -> f64{
 }
 
 pub fn wrap_angle(angle:f64) -> f64{
-    let mut angle = angle % pi2;
+    let mut angle = angle % PI2;
 
     if angle < -std::f64::consts::PI{
-        angle += pi2
+        angle += PI2
     }
     else if angle > std::f64::consts::PI{
-        angle -= pi2
+        angle -= PI2
     }
     angle
 }

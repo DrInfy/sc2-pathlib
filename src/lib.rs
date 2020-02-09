@@ -284,7 +284,7 @@ impl PathFind {
 
         let mut min_value = std::usize::MAX;
         let mut min_distance = std::f64::MAX;
-        let mut min_position = center.clone();
+        let mut min_position = center;
 
         for destination in destinations {
             let pos = destination.0;
@@ -355,16 +355,17 @@ impl PathFind {
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
 
-        if result.is_none(){
-            path = Vec::<(usize, usize)>::new();
-            distance = 0.0
-        }
-        else {
-            let unwrapped = result.unwrap();
-            distance = (unwrapped.1 as f64) / pos::MULTF64;
-            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
-            for pos in unwrapped.0 {
-                path.push((pos.0, pos.1))    
+        match result{
+            None => {
+                path = Vec::<(usize, usize)>::new();
+                distance = 0.0
+            },
+            Some(t) => {
+                distance = (t.1 as f64) / pos::MULTF64;
+                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
+                for pos in t.0 {
+                    path.push((pos.0, pos.1))
+                }
             }
         }
         
@@ -390,18 +391,20 @@ impl PathFind {
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
 
-        if result.is_none(){
-            path = Vec::<(usize, usize)>::new();
-            distance = 0.0
-        }
-        else {
-            let unwrapped = result.unwrap();
-            distance = (unwrapped.1 as f64) / pos::MULTF64;
-            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
-            for pos in unwrapped.0 {
-                path.push((pos.0, pos.1))    
+        match result{
+            None => {
+                path = Vec::<(usize, usize)>::new();
+                distance = 0.0
+            },
+            Some(t) => {
+                distance = (t.1 as f64) / pos::MULTF64;
+                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
+                for pos in t.0 {
+                    path.push((pos.0, pos.1))
+                }
             }
         }
+
         
         Ok((path, distance))
     }
@@ -432,16 +435,18 @@ impl PathFind {
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
 
-        if result.is_none(){
-            path = Vec::<(usize, usize)>::new();
-            distance = 0.0
-        }
-        else {
-            let unwrapped = result.unwrap();
-            distance = (unwrapped.1 as f64) / pos::MULTF64;
-            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
-            for pos in unwrapped.0 {
-                path.push((pos.0, pos.1))    
+
+        match result{
+            None => {
+                path = Vec::<(usize, usize)>::new();
+                distance = 0.0
+            },
+            Some(t) => {
+                distance = (t.1 as f64) / pos::MULTF64;
+                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
+                for pos in t.0 {
+                    path.push((pos.0, pos.1))
+                }
             }
         }
 
@@ -469,16 +474,17 @@ impl PathFind {
         let mut path: Vec<(usize, usize)>;
         let distance: f64;
 
-        if result.is_none(){
-            path = Vec::<(usize, usize)>::new();
-            distance = 0.0
-        }
-        else {
-            let unwrapped = result.unwrap();
-            distance = (unwrapped.1 as f64) / pos::MULTF64;
-            path = Vec::<(usize, usize)>::with_capacity(unwrapped.0.len());
-            for pos in unwrapped.0 {
-                path.push((pos.0, pos.1))    
+        match result{
+            None => {
+                path = Vec::<(usize, usize)>::new();
+                distance = 0.0
+            },
+            Some(t) => {
+                distance = (t.1 as f64) / pos::MULTF64;
+                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
+                for pos in t.0 {
+                    path.push((pos.0, pos.1))
+                }
             }
         }
         
@@ -556,8 +562,7 @@ impl PathFind {
             start
         }
         else {
-            let result = self.free_finder.find_free(start, &self.map, self.width, self.height);
-            result
+            self.free_finder.find_free(start, &self.map, self.width, self.height)
         }
     }
 
@@ -585,7 +590,7 @@ impl PathFind {
             }
         }
 
-        if destinations.len() == 0 {
+        if destinations.is_empty(){
             // Cannot find path to target
             Ok(((0.0, 0.0), -1.0))
         }
