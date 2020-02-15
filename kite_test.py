@@ -3,10 +3,11 @@ import time
 from typing import List
 from math import floor
 
+
 def read_maze(file_name: str) -> List[List[int]]:
-    with open(file_name, 'r') as text:
+    with open(file_name, "r") as text:
         m = text.read()
-    lines = m.split('\n')
+    lines = m.split("\n")
     final_maze = []
     for y in range(0, len(lines[0])):
         maze_line = []
@@ -15,11 +16,12 @@ def read_maze(file_name: str) -> List[List[int]]:
             maze_line.append(int(lines[x][y]))
     return final_maze
 
+
 maze = read_maze("tests/empty10x10.txt")
 pf = sc2pathlibp.PathFinder(maze)
 pf.normalize_influence(1)
 enemy_pos = (4, 0)
-start_pos = (5,5)
+start_pos = (5, 5)
 pf.add_influence_walk([enemy_pos], 100, 7)
 end_result = pf.find_low_inside_walk(start_pos, enemy_pos, 5)
 print(end_result)

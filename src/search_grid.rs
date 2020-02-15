@@ -1,16 +1,21 @@
-
 #[derive(Clone, Debug)]
-pub struct FreeFinder{
-    closest_grid: Vec::<(i64, i64)> 
+pub struct FreeFinder {
+    closest_grid: Vec<(i64, i64)>,
 }
 
 impl FreeFinder {
     pub fn new() -> FreeFinder {
-        let closest_grid = create_search_grid(); 
+        let closest_grid = create_search_grid();
         FreeFinder { closest_grid }
     }
 
-    pub fn find_free(&self, lookup: (usize, usize), map: &Vec<Vec<usize>>, width: usize, height: usize) -> (usize, usize) {
+    pub fn find_free(
+        &self,
+        lookup: (usize, usize),
+        map: &Vec<Vec<usize>>,
+        width: usize,
+        height: usize,
+    ) -> (usize, usize) {
         let mut result = (lookup.0, lookup.1);
 
         for offset in &self.closest_grid {
@@ -19,7 +24,7 @@ impl FreeFinder {
             if adjusted.0 >= 0 && adjusted.1 >= 0 {
                 let adjusted_usize = (adjusted.0 as usize, adjusted.1 as usize);
 
-                if adjusted_usize.0 < width &&adjusted_usize.1 < height {
+                if adjusted_usize.0 < width && adjusted_usize.1 < height {
                     if map[adjusted_usize.0][adjusted_usize.1] > 0 {
                         result = adjusted_usize;
                         break;
@@ -42,8 +47,8 @@ impl FreeFinder {
 /// _854345__
 /// __87678__
 /// ___A9A___
-fn create_search_grid() -> Vec::<(i64, i64)> {
-    let mut search_grid: Vec::<(i64, i64)> = Vec::<(i64, i64)>::new();
+fn create_search_grid() -> Vec<(i64, i64)> {
+    let mut search_grid: Vec<(i64, i64)> = Vec::<(i64, i64)>::new();
     // 0, Not checked
     //search_grid.push((0, 0));
 

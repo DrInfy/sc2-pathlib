@@ -26,14 +26,13 @@ impl Pos {
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &Pos) -> usize{
+    pub fn octile_distance(&self, other: &Pos) -> usize {
         let dx = absdiff(self.0, other.0);
         let dy = absdiff(self.1, other.1);
 
-        if dx > dy{
+        if dx > dy {
             MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
-        }
-        else{
+        } else {
             MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
         }
     }
@@ -49,7 +48,7 @@ impl Pos {
         let mut val_up: bool = false;
 
         if x > 0 {
-            val_left =  grid[x - 1][y]> 0;
+            val_left = grid[x - 1][y] > 0;
         }
 
         if y > 0 {
@@ -134,14 +133,13 @@ impl InfluencedPos {
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &InfluencedPos, normal_influence: usize) -> usize{
+    pub fn octile_distance(&self, other: &InfluencedPos, normal_influence: usize) -> usize {
         let dx = absdiff(self.0, other.0);
         let dy = absdiff(self.1, other.1);
 
-        if dx > dy{
+        if dx > dy {
             (MULT * dx + DIAGONAL_MINUS_CARDINAL * dy) * normal_influence
-        }
-        else{
+        } else {
             (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * normal_influence
         }
     }
@@ -157,7 +155,7 @@ impl InfluencedPos {
         let mut val_up: usize = 0;
 
         if x > 0 {
-            val_left =  grid[x - 1][y];
+            val_left = grid[x - 1][y];
         }
 
         if y > 0 {
