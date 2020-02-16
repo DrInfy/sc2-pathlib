@@ -79,7 +79,7 @@ impl PosLarge {
             }
 
             if val_up {
-                val_left_up = grid[x - 1][y - 1] > 0;
+                val_left_up = grid[x - 1][y + 1] > 0;
             }
         }
 
@@ -196,7 +196,7 @@ impl InfluencedPosLarge {
             }
 
             if val_up > 0 {
-                val_left_up = grid[x - 1][y - 1];
+                val_left_up = grid[x - 1][y + 1];
             }
         }
 
