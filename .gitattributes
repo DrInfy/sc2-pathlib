@@ -1,0 +1,4 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+*.py text eol=lf
+*.rs text eol=lf
+*.sh -lf
