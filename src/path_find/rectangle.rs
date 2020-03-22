@@ -9,13 +9,6 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    fn new(x: usize, y: usize, x_end: usize, y_end: usize) -> Rectangle {
-        Rectangle { x,
-                    y,
-                    x_end,
-                    y_end }
-    }
-
     pub fn init_from_center(center: (f32, f32), size: (usize, usize), width: usize, height: usize) -> Rectangle {
         let pos_x: usize = center.0 as usize;
         let pos_y: usize = center.1 as usize;
