@@ -1,5 +1,4 @@
 use pathfinding::prelude::absdiff;
-use std::cmp::min;
 
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
@@ -40,7 +39,7 @@ impl PosLarge {
         }
     }
 
-    pub fn successors(&self, grid: &Vec<Vec<usize>>) -> Vec<(PosLarge, usize)> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(PosLarge, usize)> {
         let &PosLarge(x, y) = self;
         let mut arr = Vec::<(PosLarge, usize)>::with_capacity(8);
         //let arr = Vec<(PosLarge, f32)>();
@@ -160,7 +159,7 @@ impl InfluencedPosLarge {
         }
     }
 
-    pub fn successors(&self, grid: &Vec<Vec<usize>>) -> Vec<(InfluencedPosLarge, usize)> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(InfluencedPosLarge, usize)> {
         let &InfluencedPosLarge(x, y) = self;
         let mut arr = Vec::<(InfluencedPosLarge, usize)>::with_capacity(8);
 
