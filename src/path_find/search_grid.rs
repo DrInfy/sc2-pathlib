@@ -9,13 +9,12 @@ impl FreeFinder {
         FreeFinder { closest_grid }
     }
 
-    pub fn find_free(
-        &self,
-        lookup: (usize, usize),
-        map: &Vec<Vec<usize>>,
-        width: usize,
-        height: usize,
-    ) -> (usize, usize) {
+    pub fn find_free(&self,
+                     lookup: (usize, usize),
+                     map: &Vec<Vec<usize>>,
+                     width: usize,
+                     height: usize)
+                     -> (usize, usize) {
         let mut result = (lookup.0, lookup.1);
 
         for offset in &self.closest_grid {
