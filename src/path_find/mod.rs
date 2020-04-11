@@ -61,6 +61,15 @@ impl PathFind {
                    auto_correct,
                    free_finder }
     }
+
+    pub fn test_normalize_influence(&mut self, value: usize)->usize{
+        self.normalize_influence(value);
+        let mut sum: usize =0;
+        for x in &self.map{
+            sum += x.iter().sum::<usize>();
+        }
+        sum
+    }
 }
 
 #[pymethods]
@@ -177,10 +186,11 @@ impl PathFind {
     fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
 
-        for x in 0..self.width {
-            for y in 0..self.height {
-                if self.map[x][y] > 0 {
-                    self.map[x][y] = value;
+        for y in &mut self.map{
+            for x in y{
+                if *x > 0{
+                    *x = value;
+
                 }
             }
         }
