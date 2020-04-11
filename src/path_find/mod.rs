@@ -214,9 +214,9 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
-        let mult = 1.0 / (distance * pos::MULTF64 as f32);
-        let diameter = ((distance * 2f32) as usize) + 2;
+    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+        let mult = 1.0 / (distance * pos::MULTF64);
+        let diameter = ((distance * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -224,7 +224,7 @@ impl PathFind {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f32) * mult);
+                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f64) * mult);
                     if value > 0.0 {
                         self.map[x][y] += value as usize;
                     }
@@ -236,11 +236,11 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
         let value = max as usize;
-        let mult_distance = distance * pos::MULTF64 as f32;
+        let mult_distance = distance * pos::MULTF64;
 
-        let diameter = ((distance * 2f32) as usize) + 2;
+        let diameter = ((distance * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -248,7 +248,7 @@ impl PathFind {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    if (octile_distance(position, (x, y)) as f32) < mult_distance {
+                    if (octile_distance(position, (x, y)) as f64) < mult_distance {
                         self.map[x][y] += value;
                     }
                 }
