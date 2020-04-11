@@ -63,6 +63,36 @@ impl PathFind {
     }
 }
 
+impl PathFind {
+    // Removes multiple blocks on the grid and makes it pathable
+    // center = center of block
+    pub fn remove_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    self.map[x][y] = self.normal_influence;
+                }
+            }
+        }
+    }
+
+    // Creates a block on the grid that is not pathable
+    // center = center of building
+    pub fn create_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    self.map[x][y] = 0;
+                }
+            }
+        }
+    }
+}
+
 #[pymethods]
 impl PathFind {
     #[new]
@@ -117,14 +147,18 @@ impl PathFind {
         Ok(())
     }
 
-    fn reset(&mut self) -> PyResult<()> {
+    pub fn reset(&mut self) -> PyResult<()> {
         self.map = self.original_map.clone();
         Ok(())
     }
 
+    pub fn reset_void(&mut self) {
+        self.map = self.original_map.clone();
+    }
+
     // Creates a block on the grid that is not pathable
     // center = center of building
-    fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -160,19 +194,7 @@ impl PathFind {
         }
     }
 
-    // Removes multiple blocks on the grid and makes it pathable
-    // center = center of block
-    fn remove_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
-        for center in centers {
-            let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
-            for x in rect.x..rect.x_end {
-                for y in rect.y..rect.y_end {
-                    self.map[x][y] = self.normal_influence;
-                }
-            }
-        }
-    }
 
     fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
