@@ -2,8 +2,8 @@
 
 use pyo3::prelude::*;
 extern crate test;
-mod path_find;
 mod mapping;
+mod path_find;
 
 /// This module is a python module implemented in Rust.
 #[pymodule]
@@ -53,7 +53,7 @@ mod tests {
 
     fn get_pathfind(file: &str) -> path_find::PathFind {
         let map = read_vec_from_file(file);
-        path_find::PathFind::bench_new(map)
+        path_find::PathFind::new_internal(map)
     }
 
     #[test]

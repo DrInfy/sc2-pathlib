@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 mod angles;
 mod pos;
 mod pos_large;
-mod rectangle;
+pub mod rectangle;
 mod search_grid;
 
 #[pyclass]
@@ -43,9 +43,8 @@ pub fn euclidean_distance(first: (f64, f64), other: (f64, f64)) -> f64 {
     dist2.sqrt()
 }
 
-#[cfg(test)]
 impl PathFind {
-    pub fn bench_new(map: Vec<Vec<usize>>) -> Self {
+    pub fn new_internal(map: Vec<Vec<usize>>) -> Self {
         let width = map.len();
         let original_map = map.clone();
         let height = map[0].len();
@@ -61,9 +60,6 @@ impl PathFind {
                    auto_correct,
                    free_finder }
     }
-}
-
-impl PathFind {
     // Removes multiple blocks on the grid and makes it pathable
     // center = center of block
     pub fn remove_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
@@ -152,9 +148,7 @@ impl PathFind {
         Ok(())
     }
 
-    pub fn reset_void(&mut self) {
-        self.map = self.original_map.clone();
-    }
+    pub fn reset_void(&mut self) { self.map = self.original_map.clone(); }
 
     // Creates a block on the grid that is not pathable
     // center = center of building
@@ -193,8 +187,6 @@ impl PathFind {
             }
         }
     }
-
-
 
     fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
