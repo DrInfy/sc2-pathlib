@@ -211,7 +211,7 @@ impl PathFind {
     /// Adds influence based on euclidean distance
     fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
         let mult = 1.0 / (distance * pos::MULTF64 as f32);
-        let diameter = (distance as usize) + 1;
+        let diameter = ((distance * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -235,7 +235,7 @@ impl PathFind {
         let value = max as usize;
         let mult_distance = distance * pos::MULTF64 as f32;
 
-        let diameter = (distance as usize) + 1;
+        let diameter = ((distance * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
