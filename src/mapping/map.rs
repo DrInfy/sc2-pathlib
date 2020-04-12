@@ -90,7 +90,7 @@ impl Map {
                 points[x][y].walkable = walkable;
                 points[x][y].pathable = pathable;
                 points[x][y].height = height_map[x][y];
-                
+
                 if pathable {
                     fly_map[x][y] = 1;
                 }

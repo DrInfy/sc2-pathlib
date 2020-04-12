@@ -224,7 +224,7 @@ impl PathFind {
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
                     let value = max * (1.0 - (octile_distance(position, (x, y)) as f64) * mult);
-                    if value > 0.0 && self.map[x][y] > 0{
+                    if value > 0.0 && self.map[x][y] > 0 {
                         self.map[x][y] += value as usize;
                     }
                 }
