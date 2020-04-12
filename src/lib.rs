@@ -81,9 +81,9 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize_influence_automaton_le(){
+    fn test_normalize_influence_automaton_le() {
         let mut path_find = get_pathfind("tests/AutomatonLE.txt");
-        let sum =path_find.test_normalize_influence(20);
+        let sum = path_find.test_normalize_influence(20);
         assert_eq!(sum, 320320);
     }
 

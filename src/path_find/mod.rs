@@ -45,10 +45,10 @@ pub fn euclidean_distance(first: (f64, f64), other: (f64, f64)) -> f64 {
 
 #[cfg(test)]
 impl PathFind {
-    pub fn test_normalize_influence(&mut self, value: usize)->usize{
+    pub fn test_normalize_influence(&mut self, value: usize) -> usize {
         self.normalize_influence(value);
-        let mut sum: usize =0;
-        for x in &self.map{
+        let mut sum: usize = 0;
+        for x in &self.map {
             sum += x.iter().sum::<usize>();
         }
         sum
@@ -203,11 +203,10 @@ impl PathFind {
     fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
 
-        for y in &mut self.map{
-            for x in y{
-                if *x > 0{
+        for y in &mut self.map {
+            for x in y {
+                if *x > 0 {
                     *x = value;
-
                 }
             }
         }
