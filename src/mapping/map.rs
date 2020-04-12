@@ -30,7 +30,7 @@ impl Map {
     fn new(obj: &PyRawObject,
            pathing: Vec<Vec<usize>>,
            placement: Vec<Vec<usize>>,
-           height: Vec<Vec<usize>>,
+           height_map: Vec<Vec<usize>>,
            x_start: usize,
            y_start: usize,
            x_end: usize,
@@ -45,10 +45,16 @@ impl Map {
 
         for x in 0..width - 1 {
             for y in 0..height - 1 {
-                points[x][y].Walkable = pathing[x][y] > 0 || placement[x][y] > 0;
-                points[x][y].Pathable = x_start <= x && x <= x_end && y_start <= y && y <= y_end;
-                if points[x][y].Pathable {
+                let walkable = pathing[x][y] > 0 || placement[x][y] > 0;
+                let pathable = x_start <= x && x <= x_end && y_start <= y && y <= y_end;
+                points[x][y].Walkable = walkable;
+                points[x][y].Pathable = pathable;
+                if pathable {
                     fly_map[x][y] = 1;
+                }
+                if walkable {
+                    walk_map[x][y] = 1;
+                    reaper_map[x][y] = 1;
                 }
             }
         }
