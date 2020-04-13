@@ -9,7 +9,7 @@ mod search_grid;
 
 #[pyclass]
 pub struct PathFind {
-    map: Vec<Vec<usize>>,
+    pub map: Vec<Vec<usize>>,
     original_map: Vec<Vec<usize>>,
     width: usize,
     height: usize,
