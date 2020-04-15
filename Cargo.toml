@@ -12,4 +12,4 @@ version = "0.8.2"
 features = ["extension-module"]
 
 [dependencies]
-pathfinding = "2.0.0"
+pathfinding = "2.0.4"
