@@ -22,6 +22,7 @@ map = sc2pathlibp.Sc2Map(pathing, placement, height, playable_area)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"Creating map object took {ns_pf / 1000 / 1000} ms.")
 
+print(map.overlord_spots)
 map.plot("cliffs")
 
 

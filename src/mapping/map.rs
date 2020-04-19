@@ -7,6 +7,7 @@ use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
 
 const DIFFERENCE: usize = 16;
+const Y_MULT: usize = 1000000;
 
 /// Mapping for python-sc2
 #[pyclass]
@@ -16,6 +17,7 @@ pub struct Map {
     pub colossus_pathing: PathFind,
     pub reaper_pathing: PathFind,
     pub points: Vec<Vec<map_point::MapPoint>>,
+    pub overlord_spots: Vec<(f64, f64)>,
 }
 
 #[pymethods]
@@ -36,6 +38,9 @@ impl Map {
     #[getter(ground_pathing)]
     fn get_ground_pathing(&self) -> PyResult<Vec<Vec<usize>>> { Ok(self.ground_pathing.map.clone()) }
 
+    #[getter(overlord_spots)]
+    fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone()}
+
     fn draw_climbs(&self) -> Vec<Vec<usize>> {
         let width = self.ground_pathing.map.len();
         let height = self.ground_pathing.map[0].len();
@@ -46,18 +51,18 @@ impl Map {
             for y in 0..height {
                 if path[x][y] > 0 {
                     if self.points[x][y].cliff_type == Cliff::High {
-                        walk_map[x][y] = 250;
+                        walk_map[x][y] = 5;
                     } else if self.points[x][y].cliff_type == Cliff::Both {
-                        walk_map[x][y] = 200;
+                        walk_map[x][y] = 4;
                     } else if self.points[x][y].cliff_type == Cliff::Low {
-                        walk_map[x][y] = 150;
+                        walk_map[x][y] = 3;
                     } else {
-                        walk_map[x][y] = 75;
+                        walk_map[x][y] = 2;
                     }
                 } else if self.points[x][y].climbable {
-                    walk_map[x][y] = 50;
+                    walk_map[x][y] = 1;
                 } else if self.points[x][y].overlord_spot {
-                    walk_map[x][y] = 200;
+                    walk_map[x][y] = 6;
                 }
             }
         }
@@ -108,7 +113,9 @@ impl Map {
         let mut walk_map = vec![vec![0; height]; width];
         let mut fly_map = vec![vec![0; height]; width];
         let mut reaper_map = vec![vec![0; height]; width];
+        let mut overlord_spots: Vec<(f64, f64)> = Vec::new();
 
+        // Pass 1
         for x in 0..width {
             for y in 0..height {
                 let walkable = pathing[x][y] > 0 || placement[x][y] > 0;
@@ -127,6 +134,7 @@ impl Map {
             }
         }
 
+        // Pass 2
         for x in x_start..x_end {
             for y in y_start..y_end {
                 if !points[x][y].walkable {
@@ -147,8 +155,11 @@ impl Map {
             }
         }
 
+        // Pass 3
+        let mut set_handled_overlord_spots: HashSet<usize> = HashSet::new();
         for x in x_start..x_end {
             for y in y_start..y_end {
+                let point_hash = x + y * Y_MULT;
                 if points[x][y].climbable {
                     points[x][y].climbable = points[x + 1][y].climbable
                                              || points[x - 1][y].climbable
@@ -167,11 +178,23 @@ impl Map {
                         points[x][y].cliff_type = Cliff::None;
                     }
                 }
-
-                if points[x][y].overlord_spot {
+                
+                if !set_handled_overlord_spots.contains(&point_hash) && points[x][y].overlord_spot {
                     let target_height = points[x][y].height;
                     let mut set: HashSet<usize> = HashSet::new();
-                    if !flood_fill_overlord(&mut points, x, y, target_height, true, &mut set) {
+
+                    if flood_fill_overlord(&mut points, x, y, target_height, true, &mut set) {
+                        let mut spot = (0_f64, 0_f64);
+                        let count = set.len();
+                        for value in set {
+                            set_handled_overlord_spots.insert(value);
+                            let cx = (value % Y_MULT) as f64;
+                            let cy = (value / Y_MULT) as f64;
+                            spot = (spot.0 + cx, spot.1 + cy);
+                        }
+                        spot = (spot.0 / count as f64 + 0.5_f64, spot.1 / count as f64 + 0.5_f64);
+                        overlord_spots.push(spot);
+                    } else {
                         set.clear();
                         flood_fill_overlord(&mut points, x, y, target_height, false, &mut set);
                     }
@@ -188,7 +211,8 @@ impl Map {
               air_pathing,
               colossus_pathing,
               reaper_pathing,
-              points }
+              points,
+              overlord_spots }
     }
 }
 
@@ -199,7 +223,7 @@ fn flood_fill_overlord(points: &mut Vec<Vec<map_point::MapPoint>>,
                        replacement: bool,
                        set: &mut HashSet<usize>)
                        -> bool {
-    let key = x + y * 10000;
+    let key = x + y * Y_MULT;
     if set.contains(&key) {
         return true;
     }
