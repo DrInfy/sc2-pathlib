@@ -1,10 +1,14 @@
 use crate::path_find::PathFind;
 use pyo3::prelude::*;
 extern crate test;
+use std::collections::HashSet;
 
 use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
 
+const DIFFERENCE: usize = 16;
+
+/// Mapping for python-sc2
 #[pyclass]
 pub struct Map {
     pub ground_pathing: PathFind,
@@ -14,136 +18,59 @@ pub struct Map {
     pub points: Vec<Vec<map_point::MapPoint>>,
 }
 
-#[cfg(test)]
-impl Map {
-    pub fn new_internal(pathing: Vec<Vec<usize>>,
-                        placement: Vec<Vec<usize>>,
-                        height_map: Vec<Vec<usize>>,
-                        x_start: usize,
-                        y_start: usize,
-                        x_end: usize,
-                        y_end: usize) -> Self {
-        let width = pathing.len();
-        let height = pathing[0].len();
-        let mut points = vec![vec![map_point::MapPoint::new(); height]; width];
-
-        let mut walk_map = vec![vec![0; height]; width];
-        let mut fly_map = vec![vec![0; height]; width];
-        let mut reaper_map = vec![vec![0; height]; width];
-
-        for x in 0..width {
-            for y in 0..height {
-                let walkable = pathing[x][y] > 0 || placement[x][y] > 0;
-                let pathable = x_start <= x && x <= x_end && y_start <= y && y <= y_end;
-                points[x][y].walkable = walkable;
-                points[x][y].pathable = pathable;
-                points[x][y].height = height_map[x][y];
-
-                if pathable {
-                    fly_map[x][y] = 1;
-                }
-                if walkable {
-                    walk_map[x][y] = 1;
-                    reaper_map[x][y] = 1;
-                }
-            }
-        }
-
-        for x in 2..width - 3 {
-            for y in 2..height - 3 {
-                if !points[x][y].walkable {
-                    continue;
-                }
-
-                modify_climb(&mut points, x as i32, y as i32, -1, -1);
-
-                modify_climb(&mut points, x as i32, y as i32, -1, 1);
-            }
-        }
-
-        let ground_pathing = PathFind::new_internal(walk_map);
-        let air_pathing = PathFind::new_internal(fly_map);
-        let colossus_pathing = PathFind::new_internal(reaper_map.clone());
-        let reaper_pathing = PathFind::new_internal(reaper_map);
-
-        Map { ground_pathing,
-              air_pathing,
-              colossus_pathing,
-              reaper_pathing,
-              points }
-    }
-}
-
 #[pymethods]
 impl Map {
     #[new]
-    fn new(obj: &PyRawObject,
-           pathing: Vec<Vec<usize>>,
-           placement: Vec<Vec<usize>>,
-           height_map: Vec<Vec<usize>>,
-           x_start: usize,
-           y_start: usize,
-           x_end: usize,
-           y_end: usize) {
-        let width = pathing.len();
-        let height = pathing[0].len();
-        let mut points = vec![vec![map_point::MapPoint::new(); height]; width];
-
-        let mut walk_map = vec![vec![0; height]; width];
-        let mut fly_map = vec![vec![0; height]; width];
-        let mut reaper_map = vec![vec![0; height]; width];
-
-        for x in 0..width {
-            for y in 0..height {
-                let walkable = pathing[x][y] > 0 || placement[x][y] > 0;
-                let pathable = x_start <= x && x <= x_end && y_start <= y && y <= y_end;
-                points[x][y].walkable = walkable;
-                points[x][y].pathable = pathable;
-                points[x][y].height = height_map[x][y];
-
-                if pathable {
-                    fly_map[x][y] = 1;
-                }
-                if walkable {
-                    walk_map[x][y] = 1;
-                    reaper_map[x][y] = 1;
-                }
-            }
-        }
-
-        for x in 2..width - 3 {
-            for y in 2..height - 3 {
-                if !points[x][y].walkable {
-                    continue;
-                }
-
-                modify_climb(&mut points, x as i32, y as i32, -1, -1);
-
-                modify_climb(&mut points, x as i32, y as i32, -1, 1);
-            }
-        }
-
-        let ground_pathing = PathFind::new_internal(walk_map);
-        let air_pathing = PathFind::new_internal(fly_map);
-        let colossus_pathing = PathFind::new_internal(reaper_map.clone());
-        let reaper_pathing = PathFind::new_internal(reaper_map);
-
-        obj.init(Map { ground_pathing,
-                       air_pathing,
-                       colossus_pathing,
-                       reaper_pathing,
-                       points })
+    fn new_py(obj: &PyRawObject,
+              pathing: Vec<Vec<usize>>,
+              placement: Vec<Vec<usize>>,
+              height_map: Vec<Vec<usize>>,
+              x_start: usize,
+              y_start: usize,
+              x_end: usize,
+              y_end: usize) {
+        let map = Map::new(pathing, placement, height_map, x_start, y_start, x_end, y_end);
+        obj.init(map)
     }
 
     #[getter(ground_pathing)]
     fn get_ground_pathing(&self) -> PyResult<Vec<Vec<usize>>> { Ok(self.ground_pathing.map.clone()) }
 
-    fn reset(&mut self) -> PyResult<()> {
+    fn draw_climbs(&self) -> Vec<Vec<usize>> {
+        let width = self.ground_pathing.map.len();
+        let height = self.ground_pathing.map[0].len();
+        let mut walk_map = vec![vec![0; height]; width];
+        let path = &self.ground_pathing.map;
+
+        for x in 0..width {
+            for y in 0..height {
+                if path[x][y] > 0 {
+                    if self.points[x][y].cliff_type == Cliff::High {
+                        walk_map[x][y] = 250;
+                    } else if self.points[x][y].cliff_type == Cliff::Both {
+                        walk_map[x][y] = 200;
+                    } else if self.points[x][y].cliff_type == Cliff::Low {
+                        walk_map[x][y] = 150;
+                    } else {
+                        walk_map[x][y] = 75;
+                    }
+                } else if self.points[x][y].climbable {
+                    walk_map[x][y] = 50;
+                } else if self.points[x][y].overlord_spot {
+                    walk_map[x][y] = 200;
+                }
+            }
+        }
+
+        walk_map
+    }
+
+    /// Reset all mapping to their originals.
+    fn reset(&mut self) {
         self.ground_pathing.reset_void();
         self.air_pathing.reset_void();
         self.colossus_pathing.reset_void();
         self.reaper_pathing.reset_void();
-        Ok(())
     }
 
     pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
@@ -165,6 +92,149 @@ impl Map {
     }
 }
 
+impl Map {
+    fn new(pathing: Vec<Vec<usize>>,
+           placement: Vec<Vec<usize>>,
+           height_map: Vec<Vec<usize>>,
+           x_start: usize,
+           y_start: usize,
+           x_end: usize,
+           y_end: usize)
+           -> Self {
+        let width = pathing.len();
+        let height = pathing[0].len();
+        let mut points = vec![vec![map_point::MapPoint::new(); height]; width];
+
+        let mut walk_map = vec![vec![0; height]; width];
+        let mut fly_map = vec![vec![0; height]; width];
+        let mut reaper_map = vec![vec![0; height]; width];
+
+        for x in 0..width {
+            for y in 0..height {
+                let walkable = pathing[x][y] > 0 || placement[x][y] > 0;
+                let pathable = x_start <= x && x <= x_end && y_start <= y && y <= y_end;
+                points[x][y].walkable = walkable;
+                points[x][y].pathable = pathable;
+                points[x][y].height = height_map[x][y];
+
+                if pathable {
+                    fly_map[x][y] = 1;
+                }
+                if walkable {
+                    walk_map[x][y] = 1;
+                    reaper_map[x][y] = 1;
+                }
+            }
+        }
+
+        for x in x_start..x_end {
+            for y in y_start..y_end {
+                if !points[x][y].walkable {
+                    let h0 = points[x][y + 1].height;
+                    let h1 = points[x][y - 1].height;
+                    if (points[x][y].height >= h0 + DIFFERENCE && h0 > 0)
+                       || (points[x][y].height >= h1 + DIFFERENCE && h1 > 0)
+                    {
+                        points[x][y].overlord_spot = true;
+                    }
+                    continue;
+                }
+
+                modify_climb(&mut points, x as i32, y as i32, -1, -1);
+                modify_climb(&mut points, x as i32, y as i32, 1, -1);
+                modify_climb(&mut points, x as i32, y as i32, 1, 0);
+                modify_climb(&mut points, x as i32, y as i32, 0, 1);
+            }
+        }
+
+        for x in x_start..x_end {
+            for y in y_start..y_end {
+                if points[x][y].climbable {
+                    points[x][y].climbable = points[x + 1][y].climbable
+                                             || points[x - 1][y].climbable
+                                             || points[x][y + 1].climbable
+                                             || points[x][y - 1].climbable
+                }
+
+                let c = points[x][y].cliff_type;
+
+                if c != Cliff::None {
+                    if points[x + 1][y].cliff_type != c
+                       && points[x - 1][y].cliff_type != c
+                       && points[x][y + 1].cliff_type != c
+                       && points[x][y - 1].cliff_type != c
+                    {
+                        points[x][y].cliff_type = Cliff::None;
+                    }
+                }
+
+                if points[x][y].overlord_spot {
+                    let target_height = points[x][y].height;
+                    let mut set: HashSet<usize> = HashSet::new();
+                    if !flood_fill_overlord(&mut points, x, y, target_height, true, &mut set) {
+                        set.clear();
+                        flood_fill_overlord(&mut points, x, y, target_height, false, &mut set);
+                    }
+                }
+            }
+        }
+
+        let ground_pathing = PathFind::new_internal(walk_map);
+        let air_pathing = PathFind::new_internal(fly_map);
+        let colossus_pathing = PathFind::new_internal(reaper_map.clone());
+        let reaper_pathing = PathFind::new_internal(reaper_map);
+
+        Map { ground_pathing,
+              air_pathing,
+              colossus_pathing,
+              reaper_pathing,
+              points }
+    }
+}
+
+fn flood_fill_overlord(points: &mut Vec<Vec<map_point::MapPoint>>,
+                       x: usize,
+                       y: usize,
+                       target_height: usize,
+                       replacement: bool,
+                       set: &mut HashSet<usize>)
+                       -> bool {
+    let key = x + y * 10000;
+    if set.contains(&key) {
+        return true;
+    }
+
+    set.insert(key);
+
+    if target_height != points[x][y].height {
+        // Height difference must be at least 16 below target
+        if target_height < points[x][y].height + DIFFERENCE {
+            return false;
+        }
+
+        return true; // Could still be overlord spot.
+    }
+
+    let mut result = true;
+    points[x][y].overlord_spot = replacement;
+    // if points[x][y].overlord_spot == target {
+    if y > 0 {
+        result &= flood_fill_overlord(points, x, ((y as u32) - 1) as usize, target_height, replacement, set);
+    }
+    if x > 0 {
+        result &= flood_fill_overlord(points, ((x as u32) - 1) as usize, y, target_height, replacement, set);
+    }
+    if y < points[0].len() - 1 {
+        result &= flood_fill_overlord(points, x, y + 1, target_height, replacement, set);
+    }
+    if x < points.len() - 1 {
+        result &= flood_fill_overlord(points, x + 1, y, target_height, replacement, set);
+    }
+    // }
+
+    return result;
+}
+
 fn modify_climb(points: &mut Vec<Vec<map_point::MapPoint>>, x: i32, y: i32, x_dir: i32, y_dir: i32) {
     let x0 = x as usize;
     let y0 = y as usize;
@@ -180,38 +250,150 @@ fn modify_climb(points: &mut Vec<Vec<map_point::MapPoint>>, x: i32, y: i32, x_di
         return; // Not climbable
     }
 
-    let h0 = points[x0][y0].height;
-    let h2 = points[x2][y2].height;
+    // There are 12 possible reaper walls:
+    // 01 10 11 00 01 10 11 11 10 01 00 00
+    // 01 10 00 11 11 11 01 10 00 00 10 01
+    // Let's numerize the corners
+    // 01
+    // 23
+
+    let h0 = points[x1][y1 + 1].height;
+    let h1 = points[x1 + 1][y1 + 1].height;
+    let h2 = points[x1][y1].height;
+    let h3 = points[x1 + 1][y1].height;
 
     // Difference between levels is 15.9375 in standard map height maps
     // Difference between levels is 2 in standard sc2 measurement units.
-    if h0 + 15 <= h2 && h2 <= h0 + 17 {
-        if points[x0][y0].cliff_type == Cliff::High {
-            points[x0][y0].cliff_type = Cliff::Both;
-        } else {
-            points[x0][y0].cliff_type = Cliff::Low;
-        }
-        points[x1][y1].climbable = true;
+    // Because of rounding the height difference needs to be exactly 16
 
-        if points[x2][y2].cliff_type == Cliff::High {
-            points[x2][y2].cliff_type = Cliff::Both;
+    let set_low = |x: Cliff| {
+        if x == Cliff::None || x == Cliff::Low {
+            Cliff::Low
         } else {
-            points[x2][y2].cliff_type = Cliff::High;
+            Cliff::Both
         }
-    }
+    };
 
-    if h2 + 15 <= h0 && h0 <= h2 + 17 {
-        if points[x2][y2].cliff_type == Cliff::High {
-            points[x2][y2].cliff_type = Cliff::Both;
+    let set_high = |x: Cliff| {
+        if x == Cliff::None || x == Cliff::High {
+            Cliff::High
         } else {
-            points[x2][y2].cliff_type = Cliff::Low;
+            Cliff::Both
         }
-        points[x1][y1].climbable = true;
-
-        if points[x0][y0].cliff_type == Cliff::High {
-            points[x0][y0].cliff_type = Cliff::Both;
+    };
+    if x_dir != 0 && y_dir != 0 {
+        if x_dir == y_dir {
+            // Need to check following scenarios:
+            // 10 11 00 01
+            // 11 01 10 00
+            if (h0 == h2 && h0 == h3 && h2 == h1 + DIFFERENCE) || (h0 == h1 && h0 == h3 && h2 == h1 + DIFFERENCE) {
+                // 10 00
+                // 11 10
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                }
+            } else if (h0 == h1 && h0 == h3 && h0 == h2 + DIFFERENCE) || (h0 == h2 && h0 == h3 && h1 == h2 + DIFFERENCE)
+            {
+                // 11 01
+                // 01 00
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                }
+            }
         } else {
-            points[x0][y0].cliff_type = Cliff::High;
+            // Need to check following scenarios:
+            // 01 11 10 00
+            // 11 10 00 01
+            if (h1 == h2 && h1 == h3 && h1 == h0 + DIFFERENCE) || (h0 == h1 && h0 == h2 && h3 == h0 + DIFFERENCE) {
+                // 01 00
+                // 11 01
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                }
+            } else if (h0 == h1 && h0 == h2 && h0 == h3 + DIFFERENCE) || (h1 == h2 && h1 == h3 && h0 == h3 + DIFFERENCE)
+            {
+                // 11 10
+                // 10 00
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                }
+            }
+        }
+    } else {
+        if x_dir != 0 {
+            // Need to check following scenarios:
+            // 01 10
+            // 01 10
+            if h0 == h2 && h1 == h3 && h0 + DIFFERENCE == h1 {
+                // 01
+                // 01
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                }
+            } else if h0 == h2 && h1 == h3 && h0 == h1 + DIFFERENCE {
+                // 10
+                // 10
+                points[x1][y1].climbable = true;
+                if x_dir > 0 {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                }
+            }
+        } else if y_dir != 0 {
+            // Need to check following scenarios:
+            // 00 11
+            // 11 00
+            if h0 == h1 && h2 == h3 && h0 + DIFFERENCE == h2 {
+                // 00
+                // 11
+                points[x1][y1].climbable = true;
+                if y_dir > 0 {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                }
+            } else if h0 == h1 && h2 == h3 && h0 == h2 + DIFFERENCE {
+                // 11
+                // 00
+                points[x1][y1].climbable = true;
+                if y_dir > 0 {
+                    points[x0][y0].cliff_type = set_low(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_high(points[x2][y2].cliff_type);
+                } else {
+                    points[x0][y0].cliff_type = set_high(points[x0][y0].cliff_type);
+                    points[x2][y2].cliff_type = set_low(points[x2][y2].cliff_type);
+                }
+            }
         }
     }
 }
@@ -257,7 +439,7 @@ mod tests {
         let grid = read_vec_from_file("tests/maze4x4.txt");
         let grid2 = read_vec_from_file("tests/maze4x4.txt");
         let grid3 = read_vec_from_file("tests/maze4x4.txt");
-        let map = Map::new_internal(grid, grid2, grid3, 0, 0, 4, 4);
+        let map = Map::new(grid, grid2, grid3, 0, 0, 4, 4);
         let path_find = map.ground_pathing;
         let r = path_find.find_path((0, 0), (3, 3), Some(0));
         let (_, distance) = r.unwrap();
