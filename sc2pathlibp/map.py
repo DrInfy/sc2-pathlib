@@ -1,6 +1,6 @@
 from .sc2pathlib import Map
 import numpy as np
-from typing import List, Optional
+from typing import List, Optional, Tuple
 # from sc2 import Point2
 
 class Sc2Map:
@@ -24,7 +24,7 @@ class Sc2Map:
             )
 
     @property
-    def overlord_spots(self):
+    def overlord_spots(self)-> List[Tuple[float, float]]:
         if self._overlord_spots is not None:
             return self._overlord_spots
         self._overlord_spots = self._map.overlord_spots

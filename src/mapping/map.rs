@@ -39,7 +39,7 @@ impl Map {
     fn get_ground_pathing(&self) -> PyResult<Vec<Vec<usize>>> { Ok(self.ground_pathing.map.clone()) }
 
     #[getter(overlord_spots)]
-    fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone()}
+    fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }
 
     fn draw_climbs(&self) -> Vec<Vec<usize>> {
         let width = self.ground_pathing.map.len();
@@ -164,7 +164,10 @@ impl Map {
                     points[x][y].climbable = points[x + 1][y].climbable
                                              || points[x - 1][y].climbable
                                              || points[x][y + 1].climbable
-                                             || points[x][y - 1].climbable
+                                             || points[x][y - 1].climbable;
+                    if points[x][y].climbable {
+                        reaper_map[x][y] = 1;
+                    }
                 }
 
                 let c = points[x][y].cliff_type;
@@ -178,7 +181,7 @@ impl Map {
                         points[x][y].cliff_type = Cliff::None;
                     }
                 }
-                
+
                 if !set_handled_overlord_spots.contains(&point_hash) && points[x][y].overlord_spot {
                     let target_height = points[x][y].height;
                     let mut set: HashSet<usize> = HashSet::new();
@@ -192,7 +195,8 @@ impl Map {
                             let cy = (value / Y_MULT) as f64;
                             spot = (spot.0 + cx, spot.1 + cy);
                         }
-                        spot = (spot.0 / count as f64 + 0.5_f64, spot.1 / count as f64 + 0.5_f64);
+                        
+                        spot = (spot.0 / count as f64, spot.1 / count as f64);
                         overlord_spots.push(spot);
                     } else {
                         set.clear();
@@ -421,6 +425,7 @@ fn modify_climb(points: &mut Vec<Vec<map_point::MapPoint>>, x: i32, y: i32, x_di
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -463,7 +468,7 @@ mod tests {
         let grid = read_vec_from_file("tests/maze4x4.txt");
         let grid2 = read_vec_from_file("tests/maze4x4.txt");
         let grid3 = read_vec_from_file("tests/maze4x4.txt");
-        let map = Map::new(grid, grid2, grid3, 0, 0, 4, 4);
+        let map = Map::new(grid, grid2, grid3, 1, 1, 3, 3);
         let path_find = map.ground_pathing;
         let r = path_find.find_path((0, 0), (3, 3), Some(0));
         let (_, distance) = r.unwrap();
