@@ -13,3 +13,10 @@ features = ["extension-module"]
 
 [dependencies]
 pathfinding = "2.0.0"
+
+# [profile.release]
+# opt-level = 3
+# debug=false
+# panic="abort"
+# lto = "fat"
+# codegen-units = 1

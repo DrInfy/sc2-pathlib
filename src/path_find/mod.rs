@@ -4,12 +4,12 @@ use pyo3::prelude::*;
 mod angles;
 mod pos;
 mod pos_large;
-mod rectangle;
+pub mod rectangle;
 mod search_grid;
 
 #[pyclass]
 pub struct PathFind {
-    map: Vec<Vec<usize>>,
+    pub map: Vec<Vec<usize>>,
     original_map: Vec<Vec<usize>>,
     width: usize,
     height: usize,
@@ -45,7 +45,18 @@ pub fn euclidean_distance(first: (f64, f64), other: (f64, f64)) -> f64 {
 
 #[cfg(test)]
 impl PathFind {
-    pub fn bench_new(map: Vec<Vec<usize>>) -> Self {
+    pub fn test_normalize_influence(&mut self, value: usize) -> usize {
+        self.normalize_influence(value);
+        let mut sum: usize = 0;
+        for x in &self.map {
+            sum += x.iter().sum::<usize>();
+        }
+        sum
+    }
+}
+
+impl PathFind {
+    pub fn new_internal(map: Vec<Vec<usize>>) -> Self {
         let width = map.len();
         let original_map = map.clone();
         let height = map[0].len();
@@ -61,14 +72,32 @@ impl PathFind {
                    auto_correct,
                    free_finder }
     }
+    // Removes multiple blocks on the grid and makes it pathable
+    // center = center of block
+    pub fn remove_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
-    pub fn test_normalize_influence(&mut self, value: usize)->usize{
-        self.normalize_influence(value);
-        let mut sum: usize =0;
-        for x in &self.map{
-            sum += x.iter().sum::<usize>();
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    self.map[x][y] = self.normal_influence;
+                }
+            }
         }
-        sum
+    }
+
+    // Creates a block on the grid that is not pathable
+    // center = center of building
+    pub fn create_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+        for center in centers {
+            let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    self.map[x][y] = 0;
+                }
+            }
+        }
     }
 }
 
@@ -126,14 +155,16 @@ impl PathFind {
         Ok(())
     }
 
-    fn reset(&mut self) -> PyResult<()> {
+    pub fn reset(&mut self) -> PyResult<()> {
         self.map = self.original_map.clone();
         Ok(())
     }
 
+    pub fn reset_void(&mut self) { self.map = self.original_map.clone(); }
+
     // Creates a block on the grid that is not pathable
     // center = center of building
-    fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -169,37 +200,22 @@ impl PathFind {
         }
     }
 
-    // Removes multiple blocks on the grid and makes it pathable
-    // center = center of block
-    fn remove_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
-        for center in centers {
-            let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
-
-            for x in rect.x..rect.x_end {
-                for y in rect.y..rect.y_end {
-                    self.map[x][y] = self.normal_influence;
-                }
-            }
-        }
-    }
-
     fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
 
-        for y in &mut self.map{
-            for x in y{
-                if *x > 0{
+        for y in &mut self.map {
+            for x in y {
+                if *x > 0 {
                     *x = value;
-
                 }
             }
         }
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
-        let mult = 1.0 / (distance * pos::MULTF64 as f32);
-        let diameter = (distance as usize) + 1;
+    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+        let mult = 1.0 / (distance * pos::MULTF64);
+        let diameter = ((distance * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -207,8 +223,8 @@ impl PathFind {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f32) * mult);
-                    if value > 0.0 {
+                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f64) * mult);
+                    if value > 0.0 && self.map[x][y] > 0 {
                         self.map[x][y] += value as usize;
                     }
                 }
@@ -219,11 +235,11 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
         let value = max as usize;
-        let mult_distance = distance * pos::MULTF64 as f32;
+        let mult_distance = distance * pos::MULTF64;
 
-        let diameter = (distance as usize) + 1;
+        let diameter = ((distance * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -231,7 +247,7 @@ impl PathFind {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    if (octile_distance(position, (x, y)) as f32) < mult_distance {
+                    if (octile_distance(position, (x, y)) as f64) < mult_distance {
                         self.map[x][y] += value;
                     }
                 }

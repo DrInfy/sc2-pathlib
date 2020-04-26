@@ -2,14 +2,17 @@
 
 use pyo3::prelude::*;
 extern crate test;
+mod mapping;
 mod path_find;
 
 /// This module is a python module implemented in Rust.
 #[pymodule]
 fn sc2pathlib(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<path_find::PathFind>()?;
+    m.add_class::<mapping::map::Map>()?;
     Ok(())
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -50,7 +53,7 @@ mod tests {
 
     fn get_pathfind(file: &str) -> path_find::PathFind {
         let map = read_vec_from_file(file);
-        path_find::PathFind::bench_new(map)
+        path_find::PathFind::new_internal(map)
     }
 
     #[test]
@@ -78,9 +81,9 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize_influence_automaton_le(){
+    fn test_normalize_influence_automaton_le() {
         let mut path_find = get_pathfind("tests/AutomatonLE.txt");
-        let sum =path_find.test_normalize_influence(20);
+        let sum = path_find.test_normalize_influence(20);
         assert_eq!(sum, 320320);
     }
 
