@@ -23,15 +23,16 @@ pub struct Map {
 #[pymethods]
 impl Map {
     #[new]
-    fn new_py(pathing: Vec<Vec<usize>>,
+    fn new_py(obj: &PyRawObject,
+              pathing: Vec<Vec<usize>>,
               placement: Vec<Vec<usize>>,
               height_map: Vec<Vec<usize>>,
               x_start: usize,
               y_start: usize,
               x_end: usize,
-              y_end: usize)
-              -> Self {
-        Map::new(pathing, placement, height_map, x_start, y_start, x_end, y_end)
+              y_end: usize) {
+        let map = Map::new(pathing, placement, height_map, x_start, y_start, x_end, y_end);
+        obj.init(map)
     }
 
     #[getter(ground_pathing)]
@@ -194,7 +195,7 @@ impl Map {
                             let cy = (value / Y_MULT) as f64;
                             spot = (spot.0 + cx, spot.1 + cy);
                         }
-
+                        
                         spot = (spot.0 / count as f64, spot.1 / count as f64);
                         overlord_spots.push(spot);
                     } else {

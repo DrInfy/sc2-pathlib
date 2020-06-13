@@ -104,7 +104,7 @@ impl PathFind {
 #[pymethods]
 impl PathFind {
     #[new]
-    fn new(map: Vec<Vec<usize>>) -> Self {
+    fn new(obj: &PyRawObject, map: Vec<Vec<usize>>) {
         let width = map.len();
         let original_map = map.clone();
         let height = map[0].len();
@@ -112,13 +112,13 @@ impl PathFind {
         let auto_correct: bool = true;
         let free_finder = search_grid::FreeFinder::new();
 
-        PathFind { map,
-                   original_map,
-                   width,
-                   height,
-                   normal_influence,
-                   auto_correct,
-                   free_finder }
+        obj.init(PathFind { map,
+                            original_map,
+                            width,
+                            height,
+                            normal_influence,
+                            auto_correct,
+                            free_finder })
     }
 
     // object.width
