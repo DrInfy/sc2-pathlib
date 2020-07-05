@@ -573,7 +573,7 @@ impl PathFind {
     }
 
     #[inline]
-    fn find_destinations_in_inline(&self, start: (usize, usize), distance: f64) -> Vec<((usize, usize), f64)> {
+    pub fn find_destinations_in_inline(&self, start: (usize, usize), distance: f64) -> Vec<((usize, usize), f64)> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let grid: &Vec<Vec<usize>> = &self.map;
         let u_distance = (distance * pos::MULTF64) as usize;

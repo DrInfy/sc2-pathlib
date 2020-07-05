@@ -18,6 +18,10 @@ pub struct Map {
     pub reaper_pathing: PathFind,
     pub points: Vec<Vec<map_point::MapPoint>>,
     pub overlord_spots: Vec<(f64, f64)>,
+    #[pyo3(get, set)]
+    pub influence_colossus_map: bool,
+    #[pyo3(get, set)]
+    pub influence_reaper_map: bool,
 }
 
 #[pymethods]
@@ -31,6 +35,7 @@ impl Map {
               x_end: usize,
               y_end: usize)
               -> Self {
+                
         Map::new(pathing, placement, height_map, x_start, y_start, x_end, y_end)
     }
 
@@ -94,6 +99,47 @@ impl Map {
         self.colossus_pathing.remove_blocks_rust(&centers, size);
         self.reaper_pathing.remove_blocks_rust(&centers, size);
     }
+
+    pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+        let mult = 1.0 / distance;
+        let max_int = max as usize;
+        let mut maps: Vec<&PathFind> = vec![];
+        self.get_ground_influence_maps(maps);
+        // let maps = Vec::<PathFind>::new();
+        // maps.push(self.ground_pathing);
+
+        // if self.influence_colossus_map {
+        //     maps.push(self.colossus_pathing);
+        // }
+        // if self.influence_reaper_map {
+        //     maps.push(self.reaper_pathing);
+        // }
+
+        for position in &positions {
+            if self.ground_pathing.map[position.0][position.1] == 0 {
+                continue;
+            }
+
+            let destinations = self.ground_pathing.find_destinations_in_inline(*position, distance);
+            self.ground_pathing.map[position.0][position.1] += max_int;
+
+            for destination in destinations {
+                let end_point = destination.0;
+                let current_distance = destination.1;
+                let value = max * (1.0 - current_distance * mult);
+
+                if current_distance < distance {
+                    for mapping in maps.iter_mut() {
+                        mapping.map[end_point.0][end_point.1] += value as usize
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+
 }
 
 impl Map {
@@ -209,13 +255,32 @@ impl Map {
         let air_pathing = PathFind::new_internal(fly_map);
         let colossus_pathing = PathFind::new_internal(reaper_map.clone());
         let reaper_pathing = PathFind::new_internal(reaper_map);
+        
+        let influence_colossus_map=false;
+        let influence_reaper_map=false;
 
         Map { ground_pathing,
               air_pathing,
               colossus_pathing,
               reaper_pathing,
               points,
-              overlord_spots }
+              overlord_spots,
+              influence_colossus_map,
+              influence_reaper_map }
+    }
+
+    fn get_ground_influence_maps(&self, maps: &mut Vec<&PathFind>) {
+        // let mut maps = Vec::<&PathFind>::new();
+        maps.push(&self.ground_pathing);
+
+        if self.influence_colossus_map {
+            maps.push(&self.colossus_pathing);
+        }
+        if self.influence_reaper_map {
+            maps.push(&self.reaper_pathing);
+        }
+
+        // return maps;
     }
 }
 
