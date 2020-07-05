@@ -65,6 +65,7 @@ expansions = [
 ]
 
 total_distance = 0
+count = 0
 ns_pf = time.perf_counter_ns()
 pf.normalize_influence(100)
 pf.heuristic_accuracy = 2
@@ -73,11 +74,13 @@ for pos1 in expansions:
     for pos2 in expansions:
         result = pf.find_path(pos1, pos2, False)
         total_distance += result[1]
+        count += 1
 
 ns_pf = time.perf_counter_ns() - ns_pf
 
 
 print(f"pathfinding took {ns_pf / 1000 / 1000} ms. Total distance {total_distance}")
+print(f"pathfinding took {ns_pf / 1000 / 1000 / count} ms per path.")
 
 ns_pf = time.perf_counter_ns()
 pf.add_influence([(56, 65), (110, 28), (100, 98)], 150, 10, False)
