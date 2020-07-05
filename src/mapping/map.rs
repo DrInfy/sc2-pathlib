@@ -365,7 +365,7 @@ fn modify_climb(points: &mut Vec<Vec<map_point::MapPoint>>, x: i32, y: i32, x_di
             // Need to check following scenarios:
             // 10 11 00 01
             // 11 01 10 00
-            if (h0 == h2 && h0 == h3 && h2 == h1 + DIFFERENCE) || (h0 == h1 && h0 == h3 && h2 == h1 + DIFFERENCE) {
+            if (h0 == h1 || h0 == h2) && h2 == h1 + DIFFERENCE && h0 == h3  {
                 // 10 00
                 // 11 10
                 points[x1][y1].climbable = true;
