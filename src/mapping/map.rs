@@ -35,7 +35,6 @@ impl Map {
               x_end: usize,
               y_end: usize)
               -> Self {
-                
         Map::new(pathing, placement, height_map, x_start, y_start, x_end, y_end)
     }
 
@@ -103,25 +102,15 @@ impl Map {
     pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
         let mult = 1.0 / distance;
         let max_int = max as usize;
-        let mut maps: Vec<&PathFind> = vec![];
-        self.get_ground_influence_maps(maps);
-        // let maps = Vec::<PathFind>::new();
-        // maps.push(self.ground_pathing);
-
-        // if self.influence_colossus_map {
-        //     maps.push(self.colossus_pathing);
-        // }
-        // if self.influence_reaper_map {
-        //     maps.push(self.reaper_pathing);
-        // }
+        let mut maps = self.get_ground_influence_maps();
 
         for position in &positions {
-            if self.ground_pathing.map[position.0][position.1] == 0 {
+            if maps[0].map[position.0][position.1] == 0 {
                 continue;
             }
 
-            let destinations = self.ground_pathing.find_destinations_in_inline(*position, distance);
-            self.ground_pathing.map[position.0][position.1] += max_int;
+            let destinations = maps[0].find_destinations_in_inline(*position, distance);
+            maps[0].map[position.0][position.1] += max_int;
 
             for destination in destinations {
                 let end_point = destination.0;
@@ -138,8 +127,6 @@ impl Map {
 
         Ok(())
     }
-
-
 }
 
 impl Map {
@@ -255,9 +242,9 @@ impl Map {
         let air_pathing = PathFind::new_internal(fly_map);
         let colossus_pathing = PathFind::new_internal(reaper_map.clone());
         let reaper_pathing = PathFind::new_internal(reaper_map);
-        
-        let influence_colossus_map=false;
-        let influence_reaper_map=false;
+
+        let influence_colossus_map = false;
+        let influence_reaper_map = false;
 
         Map { ground_pathing,
               air_pathing,
@@ -269,18 +256,18 @@ impl Map {
               influence_reaper_map }
     }
 
-    fn get_ground_influence_maps(&self, maps: &mut Vec<&PathFind>) {
-        // let mut maps = Vec::<&PathFind>::new();
-        maps.push(&self.ground_pathing);
+    fn get_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
+        let mut maps = Vec::<&mut PathFind>::new();
+        maps.push(&mut self.ground_pathing);
 
         if self.influence_colossus_map {
-            maps.push(&self.colossus_pathing);
+            maps.push(&mut self.colossus_pathing);
         }
         if self.influence_reaper_map {
-            maps.push(&self.reaper_pathing);
+            maps.push(&mut self.reaper_pathing);
         }
 
-        // return maps;
+        return maps;
     }
 }
 
