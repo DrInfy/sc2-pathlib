@@ -74,7 +74,7 @@ impl PathFind {
     }
     // Removes multiple blocks on the grid and makes it pathable
     // center = center of block
-    pub fn remove_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+    pub fn remove_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
@@ -88,7 +88,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_blocks_rust(&mut self, centers: &Vec<(f32, f32)>, size: (usize, usize)) {
+    pub fn create_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
