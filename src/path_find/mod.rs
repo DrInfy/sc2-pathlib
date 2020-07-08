@@ -2,7 +2,7 @@ use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
 mod angles;
-mod pos;
+pub mod pos;
 mod pos_large;
 pub mod rectangle;
 mod search_grid;

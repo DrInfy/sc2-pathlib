@@ -11,6 +11,7 @@ class Sc2Map:
         playable_area: 'sc2.position.Rect'):
 
         self._overlord_spots: Optional[List[Tuple[float, float]]] = None
+        self._chokes: Optional[List[Tuple[Tuple[int, int],Tuple[int, int]]]] = None
 
         self.height_map = height_map
         self._map = Map(
@@ -29,6 +30,13 @@ class Sc2Map:
             return self._overlord_spots
         self._overlord_spots = self._map.overlord_spots
         return self._overlord_spots
+    
+    @property
+    def chokes(self)-> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        if self._chokes is not None:
+            return self._chokes
+        self._chokes = self._map.chokes
+        return self._chokes
 
     
     def plot(self, image_name: str = "map", resize: int = 4):
@@ -62,7 +70,7 @@ class Sc2Map:
 
         image = np.array(self._map.draw_chokes(), dtype=np.uint8)
         image = np.rot90(image, 1)
-        image = np.multiply(image, 42)
+        # image = np.multiply(image, 42)
         self.plot_image(image, image_name, resize)
 
     def plot_image(self, image, image_name: str = "map", resize: int = 4):

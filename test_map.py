@@ -25,5 +25,6 @@ print(f"Creating map object took {ns_pf / 1000 / 1000} ms.")
 print(map.overlord_spots)
 map.plot("cliffs")
 map.plot_chokes("chokes")
+print(f"Choke lines found: {len(map.chokes)}")
 
 input("Press Enter to continue...")

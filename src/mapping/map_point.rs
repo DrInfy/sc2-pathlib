@@ -21,6 +21,7 @@ pub struct MapPoint {
     pub height: usize,
     pub overlord_spot: bool,
     pub is_border: bool,
+    pub is_choke: bool,
 }
 
 impl MapPoint {
@@ -34,7 +35,6 @@ impl MapPoint {
         let height = 0;
         let overlord_spot = false;
         let is_border = false;
-        let is_choke_border = false;
         let is_choke = false;
 
         MapPoint { zone_index,
@@ -45,6 +45,7 @@ impl MapPoint {
                    structure_index,
                    height,
                    overlord_spot,
-                   is_border }
+                   is_border,
+                   is_choke }
     }
 }
