@@ -73,6 +73,23 @@ impl Map {
         walk_map
     }
 
+    fn draw_chokes(&self) -> Vec<Vec<usize>> {
+        let width = self.ground_pathing.map.len();
+        let height = self.ground_pathing.map[0].len();
+        let mut walk_map = vec![vec![0; height]; width];
+        let path = &self.ground_pathing.map;
+
+        for x in 0..width {
+            for y in 0..height {
+                if self.points[x][y].is_border {
+                    walk_map[x][y] = 6;
+                }
+            }
+        }
+
+        walk_map
+    }
+
     /// Reset all mapping to their originals.
     fn reset(&mut self) {
         self.ground_pathing.reset_void();
@@ -177,6 +194,19 @@ impl Map {
                     {
                         points[x][y].overlord_spot = true;
                     }
+
+                    if (points[x + 1][y + 1].walkable
+                        || points[x - 1][y + 1].walkable
+                        || points[x + 1][y].walkable
+                        || points[x - 1][y].walkable
+                        || points[x + 1][y - 1].walkable
+                        || points[x - 1][y - 1].walkable
+                        || points[x][y + 1].walkable
+                        || points[x][y - 1].walkable)
+                    {
+                        points[x][y].is_border = true;
+                    }
+
                     continue;
                 }
 
@@ -268,6 +298,20 @@ impl Map {
         }
 
         return maps;
+    }
+
+    fn get_borders(&self) -> Vec<(usize, usize)> {
+        let mut result = Vec::<(usize, usize)>::new();
+
+        for x in 0..self.ground_pathing.width {
+            for y in 0..self.ground_pathing.height {
+                if self.points[x][y].is_border {
+                    result.push((x, y));
+                }
+            }
+        }
+
+        return result;
     }
 }
 
@@ -365,7 +409,7 @@ fn modify_climb(points: &mut Vec<Vec<map_point::MapPoint>>, x: i32, y: i32, x_di
             // Need to check following scenarios:
             // 10 11 00 01
             // 11 01 10 00
-            if (h0 == h1 || h0 == h2) && h2 == h1 + DIFFERENCE && h0 == h3  {
+            if (h0 == h1 || h0 == h2) && h2 == h1 + DIFFERENCE && h0 == h3 {
                 // 10 00
                 // 11 10
                 points[x1][y1].climbable = true;
@@ -514,6 +558,16 @@ mod tests {
         new_arr
     }
 
+    fn get_choke_map() -> Map
+    {
+        let grid = read_vec_from_file("tests/choke10x10.txt");
+        let grid2 = read_vec_from_file("tests/choke10x10.txt");
+        let grid3 = read_vec_from_file("tests/choke10x10.txt");
+
+        let map = Map::new(grid, grid2, grid3, 2, 2, 11, 11);
+        return map;
+    }
+
     #[test]
     fn test_find_path_map() {
         let grid = read_vec_from_file("tests/maze4x4.txt");
@@ -524,5 +578,12 @@ mod tests {
         let r = path_find.find_path((0, 0), (3, 3), Some(0));
         let (_, distance) = r.unwrap();
         assert_eq!(distance, 6.0);
+    }
+
+    #[test]
+    fn test_find_map_borders() {
+        let map = get_choke_map();
+        let r = map.get_borders();
+        assert_eq!(r.len(), 20 + 16);
     }
 }

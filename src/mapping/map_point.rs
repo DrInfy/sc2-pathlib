@@ -20,6 +20,7 @@ pub struct MapPoint {
     pub structure_index: i32,
     pub height: usize,
     pub overlord_spot: bool,
+    pub is_border: bool,
 }
 
 impl MapPoint {
@@ -32,6 +33,10 @@ impl MapPoint {
         let structure_index = 0_i32;
         let height = 0;
         let overlord_spot = false;
+        let is_border = false;
+        let is_choke_border = false;
+        let is_choke = false;
+
         MapPoint { zone_index,
                    cliff_type,
                    pathable,
@@ -39,6 +44,7 @@ impl MapPoint {
                    climbable,
                    structure_index,
                    height,
-                   overlord_spot }
+                   overlord_spot,
+                   is_border }
     }
 }

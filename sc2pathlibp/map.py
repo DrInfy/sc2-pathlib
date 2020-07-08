@@ -42,12 +42,31 @@ class Sc2Map:
         :param resize: multiplier for resizing the image
         :return: None
         """
-        import cv2
 
         image = np.array(self._map.draw_climbs(), dtype=np.uint8)
-
         image = np.rot90(image, 1)
         image = np.multiply(image, 42)
+        self.plot_image(image, image_name, resize)
+
+    def plot_chokes(self, image_name: str = "map", resize: int = 4):
+        """
+        Uses cv2 to draw current pathing grid.
+        
+        requires opencv-python
+
+        :param path: list of points to colorize
+        :param image_name: name of the window to show the image in. Unique names update only when used multiple times.
+        :param resize: multiplier for resizing the image
+        :return: None
+        """
+
+        image = np.array(self._map.draw_chokes(), dtype=np.uint8)
+        image = np.rot90(image, 1)
+        image = np.multiply(image, 42)
+        self.plot_image(image, image_name, resize)
+
+    def plot_image(self, image, image_name: str = "map", resize: int = 4):
+        import cv2
         resized = cv2.resize(image, dsize=None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
         cv2.imshow(image_name, resized)
         cv2.waitKey(1)
