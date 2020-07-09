@@ -1,9 +1,12 @@
 use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
 use crate::path_find::pos::Pos;
-use crate::path_find::pos::MULTF64;
+use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF64, SQRT2};
 use crate::path_find::PathFind;
+use pathfinding::prelude::absdiff;
 use std::cmp;
+use std::collections::HashSet;
+use pyo3::prelude::*;
 
 pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     ground_pathing: &PathFind,
@@ -20,14 +23,14 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
 
     if points[pos_start.0][pos_start.1].is_border {
         let reachable_borders = ground_pathing.djiktra((x as f64, y as f64), choke_border_distance);
-        let xmin = x_start;
-        let xmax = x_end;
+        let xmin = x;
+        let xmax = cmp::min(x as i64 + choke_distance as i64, x_end as i64) as usize;
         let ymin = cmp::max(y as i64 - choke_distance as i64, y_start as i64) as usize;
         let ymax = cmp::min(y as i64 + choke_distance as i64, y_end as i64) as usize;
 
         for x_new in xmin..xmax {
             for y_new in ymin..ymax {
-                if (x_new + y_new) % 2 == 0 || !points[x_new][y_new].is_border {
+                if !points[x_new][y_new].is_border {
                     // Needs to be a border to be acceptable position
                     continue;
                 }
@@ -81,5 +84,106 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                 }
             }
         }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub struct Choke {
+    pub lines: Vec<((usize, usize), (usize, usize))>,
+    pub side1: Vec<(usize, usize)>,
+    pub side2: Vec<(usize, usize)>,
+    pub pixels: Vec<(usize, usize)>,
+}
+
+
+impl Choke {
+    pub fn new(line: ((usize, usize), (usize, usize))) -> Self {
+        let mut lines = Vec::<((usize, usize), (usize, usize))>::new();
+        lines.push(line);
+        let mut side1 = Vec::<(usize, usize)>::new();
+        side1.push(line.0);
+        let mut side2 = Vec::<(usize, usize)>::new();
+        side2.push(line.1);
+        let pixels = Vec::<(usize, usize)>::new();
+
+        Choke { lines,
+                side1,
+                side2,
+                pixels }
+    }
+
+    fn add_line(&mut self, point1: (usize, usize), point2: (usize, usize)) {
+        self.lines.push((point1, point2));
+        self.side1.push(point1);
+        self.side2.push(point2);
+    }
+}
+
+pub fn group_chokes(chokes: &mut Vec<((usize, usize), (usize, usize))>) -> Vec<Choke> {
+    let mut result = Vec::<Choke>::new();
+    let mut used_indices = HashSet::new();
+
+    for i in 0..chokes.len() {
+        if used_indices.contains(&i) {
+            continue;
+        }
+
+        used_indices.insert(i);
+        let mut current_choke = Choke::new(chokes[i]);
+        let mut last_line_count = 0;
+        let mut current_line_count = current_choke.lines.len();
+
+        while last_line_count < current_line_count {
+            for j in (i + 1)..chokes.len() {
+                if used_indices.contains(&j) {
+                    continue;
+                }
+                let check_line = chokes[j];
+                for k in 0..current_choke.lines.len() {
+                    let point1 = current_choke.side1[k];
+                    if octile_distance(check_line.0, point1) <= SQRT2 {
+                        for l in 0..current_choke.lines.len() {
+                            let point2 = current_choke.side2[l];
+                            if octile_distance(check_line.1, point2) <= SQRT2
+                            {
+                                used_indices.insert(j);
+                                current_choke.add_line(point1, point2);
+                                break;
+                            }
+                        }
+                        
+                    }
+                    if octile_distance(check_line.1, point1) <= SQRT2 {
+                        for l in 0..current_choke.lines.len() {
+                            let point2 = current_choke.side2[l];
+                            if octile_distance(check_line.0, point1) <= SQRT2 {
+                                used_indices.insert(j);
+                                current_choke.add_line(point2, point1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            last_line_count = current_line_count;
+            current_line_count = current_choke.lines.len();
+        }
+
+        result.push(current_choke);
+    }
+
+    return result;
+}
+
+#[inline]
+pub fn octile_distance(first: (usize, usize), second: (usize, usize)) -> usize {
+    let dx = absdiff(first.0, second.0);
+    let dy = absdiff(first.1, second.1);
+
+    if dx > dy {
+        MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
+    } else {
+        MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
     }
 }

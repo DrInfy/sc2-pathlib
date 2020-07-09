@@ -10,6 +10,7 @@ use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
+use super::chokes::{group_chokes, Choke};
 
 const DIFFERENCE: usize = 16;
 const Y_MULT: usize = 1000000;
@@ -27,7 +28,7 @@ pub struct Map {
     pub influence_colossus_map: bool,
     #[pyo3(get, set)]
     pub influence_reaper_map: bool,
-    pub chokes: Vec<((usize, usize), (usize, usize))>,
+    pub chokes: Vec<Choke>,
 }
 
 #[pymethods]
@@ -51,7 +52,7 @@ impl Map {
     fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }
 
     #[getter(chokes)]
-    fn get_chokes(&self) -> Vec<((usize, usize), (usize, usize))> { self.chokes.clone() }
+    fn get_chokes(&self) -> Vec<Choke> { self.chokes.clone() }
 
     fn draw_climbs(&self) -> Vec<Vec<usize>> {
         let width = self.ground_pathing.map.len();
@@ -180,7 +181,7 @@ impl Map {
         let mut reaper_map = vec![vec![0; height]; width];
         let mut overlord_spots: Vec<(f64, f64)> = Vec::new();
 
-        let mut chokes = Vec::<((usize, usize), (usize, usize))>::new();
+        let mut choke_lines = Vec::<((usize, usize), (usize, usize))>::new();
         let x_left_border = x_start - 1;
         let y_top_border = y_start - 1;
         // Pass 1
@@ -260,7 +261,7 @@ impl Map {
                     }
                 }
 
-                solve_chokes(&mut points, &border_pathing, &mut chokes, x, y, x_start, y_start, x_end, y_end);
+                solve_chokes(&mut points, &border_pathing, &mut choke_lines, x, y, x_start, y_start, x_end, y_end);
 
                 let c = points[x][y].cliff_type;
 
@@ -304,7 +305,8 @@ impl Map {
 
         let influence_colossus_map = false;
         let influence_reaper_map = false;
-
+        let chokes = group_chokes(&mut choke_lines);
+        
         Map { ground_pathing,
               air_pathing,
               colossus_pathing,
@@ -426,11 +428,11 @@ mod tests {
     }
 
     fn get_choke_map() -> Map {
-        let grid = read_vec_from_file("tests/choke10x10.txt");
-        let grid2 = read_vec_from_file("tests/choke10x10.txt");
-        let grid3 = read_vec_from_file("tests/choke10x10.txt");
+        let grid = read_vec_from_file("tests/choke.txt");
+        let grid2 = read_vec_from_file("tests/choke.txt");
+        let grid3 = read_vec_from_file("tests/choke.txt");
 
-        let map = Map::new(grid, grid2, grid3, 2, 2, 12, 12);
+        let map = Map::new(grid, grid2, grid3, 2, 2, 38, 38);
         return map;
     }
 
@@ -459,6 +461,6 @@ mod tests {
     fn test_find_map_chokes() {
         let map = get_choke_map();
         let r = map.get_chokes();
-        assert_eq!(r.len(), 8);
+        assert_eq!(r.len(), 1);
     }
 }
