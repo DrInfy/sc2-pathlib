@@ -728,4 +728,26 @@ impl PathFind {
 
         return destination_collection;
     }
+
+    pub fn djiktra(&self, start: (f64, f64), distance: f64) -> Vec<((usize, usize), f64)> {
+        let start_int = (start.0 as usize, start.1 as usize);
+        let start: pos::Pos = pos::Pos(start_int.0, start_int.1);
+        let grid: &Vec<Vec<usize>> = &self.map;
+        let u_distance = (distance * pos::MULTF64) as usize;
+
+        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
+
+        let hash_map = result.0;
+        let mut destination_collection: Vec<((usize, usize), f64)> =
+            Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+
+        for found_path in hash_map {
+            let x = (found_path.0).0;
+            let y = (found_path.0).1;
+            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            destination_collection.push(((x, y), d));
+        }
+
+        return destination_collection;
+    }
 }

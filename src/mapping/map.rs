@@ -2,10 +2,11 @@ use crate::path_find::pos::Pos;
 use crate::path_find::pos::MULTF64;
 use crate::path_find::PathFind;
 use pyo3::prelude::*;
-use std::cmp;
+
 extern crate test;
 use std::collections::HashSet;
 
+use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
@@ -26,7 +27,7 @@ pub struct Map {
     pub influence_colossus_map: bool,
     #[pyo3(get, set)]
     pub influence_reaper_map: bool,
-    pub chokes: Vec::<((usize, usize), (usize, usize))>
+    pub chokes: Vec<((usize, usize), (usize, usize))>,
 }
 
 #[pymethods]
@@ -50,7 +51,7 @@ impl Map {
     fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }
 
     #[getter(chokes)]
-    fn get_chokes(&self) ->  Vec::<((usize, usize), (usize, usize))> { self.chokes.clone() }
+    fn get_chokes(&self) -> Vec<((usize, usize), (usize, usize))> { self.chokes.clone() }
 
     fn draw_climbs(&self) -> Vec<Vec<usize>> {
         let width = self.ground_pathing.map.len();
@@ -95,8 +96,7 @@ impl Map {
                     } else {
                         walk_map[x][y] = 255;
                     }
-                }
-                else if point.is_choke {
+                } else if point.is_choke {
                     walk_map[x][y] = 100;
                 }
             }
@@ -175,15 +175,14 @@ impl Map {
         let mut points = vec![vec![map_point::MapPoint::new(); height]; width];
 
         let mut walk_map = vec![vec![0; height]; width];
+        let mut border_map = vec![vec![0; height]; width];
         let mut fly_map = vec![vec![0; height]; width];
         let mut reaper_map = vec![vec![0; height]; width];
         let mut overlord_spots: Vec<(f64, f64)> = Vec::new();
 
-        let choke_distance = 13f64;
-        let choke_border_distance = 30f64;
-
         let mut chokes = Vec::<((usize, usize), (usize, usize))>::new();
-
+        let x_left_border = x_start - 1;
+        let y_top_border = y_start - 1;
         // Pass 1
         for x in 0..width {
             for y in 0..height {
@@ -199,6 +198,10 @@ impl Map {
                 if walkable {
                     walk_map[x][y] = 1;
                     reaper_map[x][y] = 1;
+                }
+
+                if x == x_left_border || x == x_end || y == y_top_border || y == y_end {
+                    border_map[x][y] = 1;
                 }
             }
         }
@@ -225,6 +228,7 @@ impl Map {
                        || points[x][y - 1].walkable
                     {
                         points[x][y].is_border = true;
+                        border_map[x][y] = 1;
                     }
 
                     continue;
@@ -239,6 +243,7 @@ impl Map {
 
         // Required for pass 3 choke detection
         let ground_pathing = PathFind::new_internal(walk_map);
+        let border_pathing = PathFind::new_internal(border_map);
 
         // Pass 3
         let mut set_handled_overlord_spots: HashSet<usize> = HashSet::new();
@@ -255,72 +260,7 @@ impl Map {
                     }
                 }
 
-                let pos_start = Pos(x, y);
-                if points[pos_start.0][pos_start.1].is_border {
-                    let reachable_borders = ground_pathing.invert_djiktra((x as f64, y as f64), choke_border_distance);
-                    let xmin = cmp::max(x as i64 - choke_distance as i64, x_start as i64) as usize;
-                    let xmax = cmp::min(x as i64 + choke_distance as i64, x_end as i64) as usize;
-                    let ymin = cmp::max(y as i64 - choke_distance as i64, y_start as i64) as usize;
-                    let ymax = cmp::min(y as i64 + choke_distance as i64, y_end as i64) as usize;
-
-                    for x_new in xmin..xmax {
-                        for y_new in ymin..ymax {
-                            if !points[x_new][y_new].is_border {
-                                // Needs to be a border to be acceptable position
-                                continue;
-                            }
-
-                            let pos = Pos(x_new, y_new);
-                            let flight_distance = pos.euclidean_distance(&pos_start) as f64 / MULTF64;
-
-                            if flight_distance > choke_distance || flight_distance < 2f64 {
-                                continue;
-                            }
-
-                            let mut found = false;
-                            for pos_distance in &reachable_borders {
-                                if (pos_distance.0).0 == x_new && (pos_distance.0).1 == y_new {
-                                    found = true;
-                                    break;
-                                }
-                            }
-
-                            if found {
-                                continue;
-                            }
-
-                            let dots = flight_distance as usize;
-                            let unit_vector = ((pos.0 as f64 - x as f64) / flight_distance,
-                                               (pos.1 as f64 - y as f64) / flight_distance);
-                            let mut wall_hit = false;
-                            let mut set_chokes = Vec::<(usize, usize)>::new();
-
-                            for i in 1..dots {
-                                let draw_x = (x as f64 + unit_vector.0 * i as f64) as usize;
-                                let draw_y = (y as f64 + unit_vector.1 * i as f64) as usize;
-                                if (draw_x == x && draw_y == y) || (draw_x == pos.0 && draw_y == pos.1) {
-                                    continue;
-                                }
-                                if points[draw_x][draw_y].is_border {
-                                    wall_hit = true;
-                                    break;
-                                } else {
-                                    set_chokes.push((draw_x, draw_y));
-                                    
-                                }
-                            }
-
-                            if !wall_hit {
-                                for dot in set_chokes {
-                                    points[dot.0][dot.1].is_choke = true;
-                                }
-                                points[x][y].is_choke = true;
-                                points[pos.0][pos.1].is_choke = true;
-                                chokes.push(((x,y), (pos.0, pos.1)));
-                            }
-                        }
-                    }
-                }
+                solve_chokes(&mut points, &border_pathing, &mut chokes, x, y, x_start, y_start, x_end, y_end);
 
                 let c = points[x][y].cliff_type;
 
@@ -507,10 +447,18 @@ mod tests {
     }
 
     // Test not working, ignored for now.
-    // #[test]
+    #[test]
     fn test_find_map_borders() {
         let map = get_choke_map();
         let r = map.get_borders();
         assert_eq!(r.len(), 20 + 16);
+    }
+
+    // Test not working, ignored for now.
+    #[test]
+    fn test_find_map_chokes() {
+        let map = get_choke_map();
+        let r = map.get_chokes();
+        assert_eq!(r.len(), 8);
     }
 }
