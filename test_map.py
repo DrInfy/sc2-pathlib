@@ -24,18 +24,19 @@ class Rect:
         self.width = width
         self.height = height
 
-playable_area = Rect(2, 2, 38, 38) 
-maze = read_maze("tests/choke.txt")
-map = sc2pathlibp.Sc2Map(maze, maze, maze, playable_area)
-print(f"Choke lines found: {len(map.chokes)}")
+# playable_area = Rect(2, 2, 38, 38) 
+# maze = read_maze("tests/choke.txt")
+# map = sc2pathlibp.Sc2Map(maze, maze, maze, playable_area)
+# print(f"Choke lines found: {len(map.chokes)}")
 
-map.plot("cliffs")
-map.plot_chokes("chokes")
-input("Press Enter to continue...")
+# map.plot("cliffs")
+# map.plot_chokes("chokes")
+# input("Press Enter to continue...")
 
-pathing = np.load("tests/AutomatonLE_pathing.npy")
-placement = np.load("tests/AutomatonLE_placement.npy")
-height = np.load("tests/AutomatonLE_height.npy")
+map_name = "Submarine LE"
+pathing = np.load(f"tests/{map_name}_pathing.npy")
+placement = np.load(f"tests/{map_name}_placement.npy")
+height = np.load(f"tests/{map_name}_height.npy")
 
 playable_area = Rect(18, 16, 148, 148)  # AutomatonLE
 ns_pf = time.perf_counter_ns()
