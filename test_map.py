@@ -48,7 +48,9 @@ print(map.overlord_spots)
 map.plot("cliffs")
 map.plot_chokes("chokes")
 print(f"Choke lines found: {len(map.chokes)}")
+arr = []
 for choke in map.chokes:
-    print(choke.lines)
+    arr.append(choke.main_line)
+print(arr)
 
 input("Press Enter to continue...")

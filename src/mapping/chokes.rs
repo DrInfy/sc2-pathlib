@@ -1,5 +1,4 @@
 use crate::mapping::map_point;
-use crate::mapping::map_point::Cliff;
 use crate::path_find::pos::Pos;
 use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF64, SQRT2};
 use crate::path_find::PathFind;
@@ -72,7 +71,6 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                 }
 
                 if !wall_hit {
-                    points[pos.0][pos.1].is_choke = true;
                     chokes.push(((x, y), (pos.0, pos.1)));
                 }
             }
@@ -88,6 +86,7 @@ pub struct Choke {
     pub side1: Vec<(usize, usize)>,
     pub side2: Vec<(usize, usize)>,
     pub pixels: Vec<(usize, usize)>,
+    pub min_length: f64
 }
 #[pymethods]
 impl Choke {
@@ -99,6 +98,8 @@ impl Choke {
 
     #[getter(side2)]
     fn get_side2(&self) -> Vec<(usize, usize)> { self.side2.clone() }
+    #[getter(main_line)]
+    fn get_main_line(&self) -> ((f64, f64), (f64, f64)) { self.main_line.clone() }
 }
 
 impl Choke {
@@ -112,11 +113,13 @@ impl Choke {
         let pixels = Vec::<(usize, usize)>::new();
         // Real main line is created later on by calculating averages
         let main_line = (((line.0).0 as f64, (line.0).1 as f64), ((line.1).0 as f64, (line.1).1 as f64));
+        let min_length = distance(line.0, line.1);
         Choke { main_line,
                 lines,
                 side1,
                 side2,
-                pixels }
+                pixels,
+                min_length }
     }
 
     fn add_line(&mut self, point1: (usize, usize), point2: (usize, usize)) {
@@ -136,13 +139,33 @@ impl Choke {
     }
 
     fn remove_excess_lines(&mut self) {
-        // TODO:
+        let mut distances = Vec::<f64>::new();
+        let mut min_distance = 999f64;
+        for line in &self.lines {
+            let d = distance(line.0, line.1);
+            distances.push(d);
+            if d < min_distance {
+                min_distance = d;
+            }
+        }
+        let max = self.lines.len();
+        for i in (0..max).rev() {
+            if distances[i] > min_distance + 2.5f64 {
+                // Remove line
+                self.lines.remove(i);
+            }
+        }
+
+        self.min_length = min_distance;
     }
 
     fn set_points(&mut self, points: &mut Vec<Vec<map_point::MapPoint>>) {
         for line in &self.lines {
             let pos1 = Pos((line.0).0, (line.0).1);
             let pos2 = Pos((line.1).0, (line.1).1);
+            
+            points[pos1.0][pos1.1].is_choke = true;
+            points[pos2.0][pos2.1].is_choke = true;
 
             let flight_distance = pos1.euclidean_distance(&pos2) as f64 / MULTF64;
 
@@ -178,7 +201,7 @@ impl Choke {
 
         x_sum = 0;
         y_sum = 0;
-        for point in &self.side1 {
+        for point in &self.side2 {
             x_sum += point.0;
             y_sum += point.1;
         }
@@ -255,8 +278,14 @@ pub fn group_chokes(choke_lines: &mut Vec<((usize, usize), (usize, usize))>,
         result.push(current_choke);
     }
 
-    for choke in &mut result {
-        choke.finalize(points);
+    let max = result.len();
+    for i in (0..max).rev() {
+        // let mut choke = &result[i];
+        result[i].finalize(points);
+        if result[i].lines.len() < 4 {
+            // Doesn't really seem like a choke
+            result.remove(i);
+        }
     }
 
     return result;
@@ -272,4 +301,12 @@ pub fn octile_distance(first: (usize, usize), second: (usize, usize)) -> usize {
     } else {
         MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
     }
+}
+
+#[inline]
+fn distance(first: (usize, usize), second: (usize, usize)) -> f64 {
+    let pos1 = Pos(first.0, first.1);
+    let pos2 = Pos(second.0, second.1);
+
+    return pos1.euclidean_distance(&pos2) as f64 / MULTF64;
 }
