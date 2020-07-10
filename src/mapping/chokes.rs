@@ -86,7 +86,7 @@ pub struct Choke {
     pub side1: Vec<(usize, usize)>,
     pub side2: Vec<(usize, usize)>,
     pub pixels: Vec<(usize, usize)>,
-    pub min_length: f64
+    pub min_length: f64,
 }
 #[pymethods]
 impl Choke {
@@ -105,7 +105,7 @@ impl Choke {
     fn get_pixels(&self) -> Vec<(usize, usize)> { self.pixels.clone() }
 
     #[getter(min_length)]
-    fn get_min_length(&self) ->f64 { self.min_length }
+    fn get_min_length(&self) -> f64 { self.min_length }
 }
 
 impl Choke {
@@ -141,7 +141,6 @@ impl Choke {
     fn finalize(&mut self, points: &mut Vec<Vec<map_point::MapPoint>>) {
         self.remove_excess_lines();
         self.calc_final_line();
-        
     }
 
     fn remove_excess_lines(&mut self) {
@@ -169,7 +168,7 @@ impl Choke {
         for line in &self.lines {
             let pos1 = Pos((line.0).0, (line.0).1);
             let pos2 = Pos((line.1).0, (line.1).1);
-            
+
             points[pos1.0][pos1.1].is_choke = true;
             points[pos2.0][pos2.1].is_choke = true;
 
@@ -291,8 +290,7 @@ pub fn group_chokes(choke_lines: &mut Vec<((usize, usize), (usize, usize))>,
         if result[i].lines.len() < 4 {
             // Doesn't really seem like a choke
             result.remove(i);
-        }
-        else {
+        } else {
             result[i].set_points(points);
         }
     }

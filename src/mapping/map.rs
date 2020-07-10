@@ -131,35 +131,6 @@ impl Map {
         self.colossus_pathing.remove_blocks_rust(&centers, size);
         self.reaper_pathing.remove_blocks_rust(&centers, size);
     }
-
-    pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
-        let mult = 1.0 / distance;
-        let max_int = max as usize;
-        let mut maps = self.get_ground_influence_maps();
-
-        for position in &positions {
-            if maps[0].map[position.0][position.1] == 0 {
-                continue;
-            }
-
-            let destinations = maps[0].find_destinations_in_inline(*position, distance);
-            maps[0].map[position.0][position.1] += max_int;
-
-            for destination in destinations {
-                let end_point = destination.0;
-                let current_distance = destination.1;
-                let value = max * (1.0 - current_distance * mult);
-
-                if current_distance < distance {
-                    for mapping in maps.iter_mut() {
-                        mapping.map[end_point.0][end_point.1] += value as usize
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl Map {
@@ -316,20 +287,6 @@ impl Map {
               influence_colossus_map,
               influence_reaper_map,
               chokes }
-    }
-
-    fn get_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
-        let mut maps = Vec::<&mut PathFind>::new();
-        maps.push(&mut self.ground_pathing);
-
-        if self.influence_colossus_map {
-            maps.push(&mut self.colossus_pathing);
-        }
-        if self.influence_reaper_map {
-            maps.push(&mut self.reaper_pathing);
-        }
-
-        return maps;
     }
 
     fn get_borders(&self) -> Vec<(usize, usize)> {
