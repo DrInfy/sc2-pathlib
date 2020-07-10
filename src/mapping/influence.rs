@@ -16,14 +16,10 @@ const DIFFERENCE: usize = 16;
 const Y_MULT: usize = 1000000;
 use crate::mapping::map::Map;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-#[repr(u8)]
-pub enum MapType {
-    None = 0b0000,
-    Ground = 0b0001,
-    Air = 0b0010,
-    Both = 0b0011,
-}
+
+const MAPS_GROUND: usize = 1;
+const MAPS_AIR: usize = 1;
+const MAPS_BOTH: usize = 1;
 
 #[pymethods]
 impl Map {
@@ -54,18 +50,20 @@ impl Map {
         }
     }
 
-    pub fn add_influence_flat_hollow(&mut self, map_type: MapType, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
+    pub fn add_influence_flat_hollow(&mut self, map_type: usize, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
+        
         let value = influence as usize;
         let mult_min = min * pos::MULTF64;
         let mult_max = max * pos::MULTF64;
-        if map_type == MapType::Ground {
-            let mut maps = self.get_ground_influence_maps();
+        let mut maps: Vec<&mut PathFind>;
+        if map_type == MAPS_GROUND {
+            maps = self.get_ground_influence_maps();
         }
-        else if map_type == MapType::Air {
-            let mut maps = self.get_air_influence_maps();
+        else if map_type == MAPS_AIR {
+            maps = self.get_air_influence_maps();
         }
         else {
-            let mut maps = self.get_both_influence_maps();
+            maps = self.get_both_influence_maps();
         }
 
         let diameter = ((max * 2f64) as usize) + 2;
