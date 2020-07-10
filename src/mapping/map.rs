@@ -6,11 +6,11 @@ use pyo3::prelude::*;
 extern crate test;
 use std::collections::HashSet;
 
+use super::chokes::{group_chokes, Choke};
 use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
 use crate::mapping::map_point::Cliff;
-use super::chokes::{group_chokes, Choke};
 
 const DIFFERENCE: usize = 16;
 const Y_MULT: usize = 1000000;
@@ -306,7 +306,7 @@ impl Map {
         let influence_colossus_map = false;
         let influence_reaper_map = false;
         let chokes = group_chokes(&mut choke_lines);
-        
+
         Map { ground_pathing,
               air_pathing,
               colossus_pathing,

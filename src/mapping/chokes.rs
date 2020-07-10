@@ -4,9 +4,9 @@ use crate::path_find::pos::Pos;
 use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF64, SQRT2};
 use crate::path_find::PathFind;
 use pathfinding::prelude::absdiff;
+use pyo3::prelude::*;
 use std::cmp;
 use std::collections::HashSet;
-use pyo3::prelude::*;
 
 pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     ground_pathing: &PathFind,
@@ -95,7 +95,17 @@ pub struct Choke {
     pub side2: Vec<(usize, usize)>,
     pub pixels: Vec<(usize, usize)>,
 }
+#[pymethods]
+impl Choke {
+    #[getter(lines)]
+    fn get_lines(&self) -> Vec<((usize, usize), (usize, usize))> { self.lines.clone() }
 
+    #[getter(side1)]
+    fn get_side1(&self) -> Vec<(usize, usize)> { self.side1.clone() }
+
+    #[getter(side2)]
+    fn get_side2(&self) -> Vec<(usize, usize)> { self.side2.clone() }
+}
 
 impl Choke {
     pub fn new(line: ((usize, usize), (usize, usize))) -> Self {
@@ -120,49 +130,62 @@ impl Choke {
     }
 }
 
-pub fn group_chokes(chokes: &mut Vec<((usize, usize), (usize, usize))>) -> Vec<Choke> {
+pub fn group_chokes(choke_lines: &mut Vec<((usize, usize), (usize, usize))>) -> Vec<Choke> {
     let mut result = Vec::<Choke>::new();
     let mut used_indices = HashSet::new();
 
-    for i in 0..chokes.len() {
+    for i in 0..choke_lines.len() {
         if used_indices.contains(&i) {
             continue;
         }
 
         used_indices.insert(i);
-        let mut current_choke = Choke::new(chokes[i]);
+        let mut current_choke = Choke::new(choke_lines[i]);
         let mut last_line_count = 0;
         let mut current_line_count = current_choke.lines.len();
+        let MULT2 = MULT * 2;
 
         while last_line_count < current_line_count {
-            for j in (i + 1)..chokes.len() {
+            for j in (i + 1)..choke_lines.len() {
                 if used_indices.contains(&j) {
                     continue;
                 }
-                let check_line = chokes[j];
+                let check_line = choke_lines[j];
                 for k in 0..current_choke.lines.len() {
                     let point1 = current_choke.side1[k];
-                    if octile_distance(check_line.0, point1) <= SQRT2 {
+                    let mut added = false;
+                    if octile_distance(check_line.0, point1) <= MULT2 {
                         for l in 0..current_choke.lines.len() {
                             let point2 = current_choke.side2[l];
-                            if octile_distance(check_line.1, point2) <= SQRT2
-                            {
+                            if octile_distance(check_line.1, point2) <= MULT2 {
                                 used_indices.insert(j);
-                                current_choke.add_line(point1, point2);
+                                if octile_distance(check_line.0, point1) > 0
+                                   || octile_distance(check_line.1, point2) > 0
+                                {
+                                    current_choke.add_line(check_line.0, check_line.1);
+                                    added = true;
+                                }
                                 break;
                             }
                         }
-                        
                     }
-                    if octile_distance(check_line.1, point1) <= SQRT2 {
+                    if octile_distance(check_line.1, point1) <= MULT2 {
                         for l in 0..current_choke.lines.len() {
                             let point2 = current_choke.side2[l];
-                            if octile_distance(check_line.0, point1) <= SQRT2 {
+                            if octile_distance(check_line.0, point2) <= MULT2 {
                                 used_indices.insert(j);
-                                current_choke.add_line(point2, point1);
+                                if octile_distance(check_line.1, point1) > 0
+                                   && octile_distance(check_line.0, point2) > 0
+                                {
+                                    current_choke.add_line(check_line.1, check_line.0);
+                                }
+                                added = true;
                                 break;
                             }
                         }
+                    }
+                    if added {
+                        break;
                     }
                 }
             }
