@@ -305,7 +305,7 @@ impl Map {
 
         let influence_colossus_map = false;
         let influence_reaper_map = false;
-        let chokes = group_chokes(&mut choke_lines);
+        let chokes = group_chokes(&mut choke_lines, &mut points);
 
         Map { ground_pathing,
               air_pathing,
