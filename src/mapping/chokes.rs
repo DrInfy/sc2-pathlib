@@ -135,7 +135,7 @@ impl Choke {
     fn finalize(&mut self, points: &mut Vec<Vec<map_point::MapPoint>>) {
         self.remove_excess_lines();
         self.calc_final_line();
-        self.set_points(points);
+        
     }
 
     fn remove_excess_lines(&mut self) {
@@ -285,6 +285,9 @@ pub fn group_chokes(choke_lines: &mut Vec<((usize, usize), (usize, usize))>,
         if result[i].lines.len() < 4 {
             // Doesn't really seem like a choke
             result.remove(i);
+        }
+        else {
+            result[i].set_points(points);
         }
     }
 
