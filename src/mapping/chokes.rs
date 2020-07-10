@@ -100,6 +100,12 @@ impl Choke {
     fn get_side2(&self) -> Vec<(usize, usize)> { self.side2.clone() }
     #[getter(main_line)]
     fn get_main_line(&self) -> ((f64, f64), (f64, f64)) { self.main_line.clone() }
+
+    #[getter(pixels)]
+    fn get_pixels(&self) -> Vec<(usize, usize)> { self.pixels.clone() }
+
+    #[getter(min_length)]
+    fn get_min_length(&self) ->f64 { self.min_length }
 }
 
 impl Choke {

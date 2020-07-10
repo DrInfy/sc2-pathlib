@@ -33,7 +33,7 @@ class Rect:
 # map.plot_chokes("chokes")
 # input("Press Enter to continue...")
 
-map_name = "Submarine LE"
+map_name = "AutomatonLE"
 pathing = np.load(f"tests/{map_name}_pathing.npy")
 placement = np.load(f"tests/{map_name}_placement.npy")
 height = np.load(f"tests/{map_name}_height.npy")
@@ -52,6 +52,12 @@ print(f"Choke lines found: {len(map.chokes)}")
 arr = []
 for choke in map.chokes:
     arr.append(choke.main_line)
+    # Available properties
+    # choke.lines
+    # choke.side1
+    # choke.side2
+    # choke.pixels
+    # choke.min_length
 print(arr)
 
 input("Press Enter to continue...")
