@@ -53,7 +53,7 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     continue;
                 }
 
-                let dots = flight_distance as usize;
+                let dots = flight_distance as i64;
                 let unit_vector =
                     ((pos.0 as f64 - x as f64) / flight_distance, (pos.1 as f64 - y as f64) / flight_distance);
                 let mut wall_hit = false;
@@ -70,7 +70,25 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     }
                 }
 
+                if !wall_hit && dots > 4 {
+                    // Cross reference to X shape
+                    let center = ((pos.0 + x) / 2, (pos.1 +y ) / 2);
+                    let perdicular_unit_vector = (-unit_vector.1, unit_vector.0);
+                    let half_dots = dots / 2;
+                    for i in -half_dots..half_dots {
+                        let draw_x = (center.0 as f64 + perdicular_unit_vector.0 * i as f64) as usize;
+                        let draw_y = (center.1 as f64 + perdicular_unit_vector.1 * i as f64) as usize;
+
+                        if !points[draw_x][draw_y].walkable {
+                            wall_hit = true;
+                            break;
+                        }   
+                    }
+                }
+
                 if !wall_hit {
+
+                    
                     chokes.push(((x, y), (pos.0, pos.1)));
                 }
             }
