@@ -72,7 +72,7 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
 
                 if !wall_hit && dots > 4 {
                     // Cross reference to X shape
-                    let center = ((pos.0 + x) / 2, (pos.1 +y ) / 2);
+                    let center = ((pos.0 + x) / 2, (pos.1 + y) / 2);
                     let perdicular_unit_vector = (-unit_vector.1, unit_vector.0);
                     let half_dots = dots / 2;
                     for i in -half_dots..half_dots {
@@ -82,13 +82,11 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                         if !points[draw_x][draw_y].walkable {
                             wall_hit = true;
                             break;
-                        }   
+                        }
                     }
                 }
 
                 if !wall_hit {
-
-                    
                     chokes.push(((x, y), (pos.0, pos.1)));
                 }
             }

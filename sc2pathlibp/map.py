@@ -1,6 +1,8 @@
 from .sc2pathlib import Map
 import numpy as np
 from typing import List, Optional, Tuple
+from .choke import Choke
+from .mappings import MapsType
 # from sc2 import Point2
 
 class Sc2Map:
@@ -11,8 +13,8 @@ class Sc2Map:
         playable_area: 'sc2.position.Rect'):
 
         self._overlord_spots: Optional[List[Tuple[float, float]]] = None
-        self._chokes: Optional[List[Tuple[Tuple[int, int],Tuple[int, int]]]] = None
-
+        self._chokes: Optional[List[Choke]] = None
+        
         self.height_map = height_map
         self._map = Map(
             np.swapaxes(pathing_grid, 0, 1),
@@ -32,13 +34,46 @@ class Sc2Map:
         return self._overlord_spots
     
     @property
-    def chokes(self)-> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    def chokes(self)-> List[Choke]:
         if self._chokes is not None:
             return self._chokes
         self._chokes = self._map.chokes
         return self._chokes
 
+    def enable_colossus_map(self, enabled: bool):
+        self._map.influence_colossus_map = enabled
     
+    def enable_reaper_map(self, enabled: bool):
+        self._map.influence_reaper_map = enabled
+
+    def add_walk_influence(self, points: List['sc.Point2'], influence: float, range: float = 3):
+        """
+        Influence applied fades up until the specified range
+        """
+        self._map.add_influence_walk(points, influence, range)
+
+    def add_tank_influence(self, points: List['sc.Point2'], influence: float, tank_min_range: float = 3, tank_max_range: float = 14.5):
+        """
+        :param tank_min_range: Tank minimum range is 2, adding both unit radiuses to that and we'll estimate it to be 3.
+        :param tank_max_range: Same for max range, 13, but but with unit radius, let's say it's 14.5 instead to err on the safe side
+        """
+        self._map.add_influence_flat_hollow(points, influence, tank_max_range, tank_max_range)
+    
+    def add_pure_ground_influence(self, points: List['sc.Point2'], influence: float, full_range: float, fade_max_range: float):
+        """
+        Use this for units that have different ground attack compared to air attack, like Tempests.
+        """
+        self._map.add_influence_fading(MapsType.PureGround, points, influence, full_range, fade_max_range)
+
+    def add_ground_influence(self, points: List['sc.Point2'], influence: float, full_range: float, fade_max_range: float):
+        self._map.add_influence_fading(MapsType.Ground, points, influence, full_range, fade_max_range)
+
+    def add_air_influence(self, points: List['sc.Point2'], influence: float, full_range: float, fade_max_range: float):
+        self._map.add_influence_fading(MapsType.Air, points, influence, full_range, fade_max_range)
+
+    def add_both_influence(self, points: List['sc.Point2'], influence: float, full_range: float, fade_max_range: float):
+        self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
+
     def plot(self, image_name: str = "map", resize: int = 4):
         """
         Uses cv2 to draw current pathing grid.

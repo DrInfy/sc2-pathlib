@@ -285,7 +285,7 @@ impl PathFind {
     }
 
     /// Adds influence based on walk distance
-    fn add_walk_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+    fn add_walk_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) {
         let max_int = max as usize;
 
         for position in &positions {
@@ -304,14 +304,13 @@ impl PathFind {
             }
         }
 
-        Ok(())
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
-    fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> PyResult<((usize, usize), f64)> {
+    fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
         let corrected_center = self.get_closest_pathable(center);
 
-        Ok(self.lowest_influence_walk_inline(corrected_center, distance))
+        return self.lowest_influence_walk_inline(corrected_center, distance)
     }
 
     #[inline]

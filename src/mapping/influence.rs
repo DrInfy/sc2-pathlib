@@ -7,25 +7,21 @@ extern crate test;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
-use crate::mapping::chokes::solve_chokes;
-use crate::mapping::climb::modify_climb;
-use crate::mapping::map_point;
-use crate::mapping::map_point::Cliff;
 
 const DIFFERENCE: usize = 16;
 const Y_MULT: usize = 1000000;
 use crate::mapping::map::Map;
 
-
+const MAPS_PURE_GROUND: usize = 0;
 const MAPS_GROUND: usize = 1;
-const MAPS_AIR: usize = 1;
-const MAPS_BOTH: usize = 1;
+const MAPS_AIR: usize = 2;
+const MAPS_BOTH: usize = 3;
 
 #[pymethods]
 impl Map {
-    pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) {
+    pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, influence: f64, distance: f64) {
         let mult = 1.0 / distance;
-        let max_int = max as usize;
+        let max_int = influence as usize;
         let mut maps = self.get_ground_influence_maps();
 
         for position in &positions {
@@ -39,7 +35,7 @@ impl Map {
             for destination in destinations {
                 let end_point = destination.0;
                 let current_distance = destination.1;
-                let value = max * (1.0 - current_distance * mult);
+                let value = influence * (1.0 - current_distance * mult);
 
                 if current_distance < distance {
                     for mapping in maps.iter_mut() {
@@ -50,21 +46,12 @@ impl Map {
         }
     }
 
-    pub fn add_influence_flat_hollow(&mut self, map_type: usize, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
-        
+    pub fn add_influence_flat_hollow(&mut self, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
         let value = influence as usize;
         let mult_min = min * pos::MULTF64;
         let mult_max = max * pos::MULTF64;
         let mut maps: Vec<&mut PathFind>;
-        if map_type == MAPS_GROUND {
-            maps = self.get_ground_influence_maps();
-        }
-        else if map_type == MAPS_AIR {
-            maps = self.get_air_influence_maps();
-        }
-        else {
-            maps = self.get_both_influence_maps();
-        }
+        maps = self.get_ground_influence_maps();
 
         let diameter = ((max * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
@@ -88,12 +75,27 @@ impl Map {
         }
     }
 
-    pub fn add_influence_fading(&mut self, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
+    pub fn add_influence_fading(&mut self,
+                                map_type: usize,
+                                positions: Vec<(usize, usize)>,
+                                influence: f64,
+                                min: f64,
+                                max: f64) {
         let mult = 1.0 / ((max - min) * pos::MULTF64);
         let value = influence as usize;
         let mult_min = min * pos::MULTF64;
         let mult_max = max * pos::MULTF64;
-        let mut maps = self.get_ground_influence_maps();
+        let mut maps: Vec<&mut PathFind>;
+
+        if map_type == MAPS_PURE_GROUND {
+            maps = self.get_pure_ground_influence_maps();
+        } else if map_type == MAPS_GROUND {
+            maps = self.get_ground_influence_maps();
+        } else if map_type == MAPS_AIR {
+            maps = self.get_air_influence_maps();
+        } else {
+            maps = self.get_both_influence_maps();
+        }
 
         let diameter = ((max * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
@@ -138,6 +140,17 @@ impl Map {
         if self.influence_colossus_map {
             maps.push(&mut self.colossus_pathing);
         }
+        if self.influence_reaper_map {
+            maps.push(&mut self.reaper_pathing);
+        }
+
+        return maps;
+    }
+
+    fn get_pure_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
+        let mut maps = Vec::<&mut PathFind>::new();
+        maps.push(&mut self.ground_pathing);
+
         if self.influence_reaper_map {
             maps.push(&mut self.reaper_pathing);
         }
