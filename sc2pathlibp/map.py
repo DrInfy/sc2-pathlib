@@ -183,7 +183,7 @@ class Sc2Map:
             image[point] = 255
         self.plot_image(image, image_name, resize)
 
-    def plot_ground_map(self, path: List[Tuple[int, int]], image_name: str = "air_map", resize: int = 4):
+    def plot_air_map(self, path: List[Tuple[int, int]], image_name: str = "air_map", resize: int = 4):
         image = np.array(self._map.air_pathing, dtype=np.uint8)
 
         for point in path:
