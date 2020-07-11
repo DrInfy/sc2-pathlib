@@ -1,5 +1,3 @@
-use crate::path_find::pos::Pos;
-use crate::path_find::pos::MULTF64;
 use crate::path_find::PathFind;
 use pyo3::prelude::*;
 
@@ -107,29 +105,122 @@ impl Map {
     }
 
     /// Reset all mapping to their originals.
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.ground_pathing.reset_void();
         self.air_pathing.reset_void();
         self.colossus_pathing.reset_void();
         self.reaper_pathing.reset_void();
     }
 
-    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f64, f64), size: (usize, usize)) {
         self.ground_pathing.create_block(center, size);
         self.colossus_pathing.create_block(center, size);
         self.reaper_pathing.create_block(center, size);
     }
 
-    pub fn create_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
+    pub fn create_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
         self.ground_pathing.create_blocks_rust(&centers, size);
         self.colossus_pathing.create_blocks_rust(&centers, size);
         self.reaper_pathing.create_blocks_rust(&centers, size);
     }
 
-    pub fn remove_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
+    pub fn remove_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
         self.ground_pathing.remove_blocks_rust(&centers, size);
         self.colossus_pathing.remove_blocks_rust(&centers, size);
         self.reaper_pathing.remove_blocks_rust(&centers, size);
+    }
+
+    pub fn get_borders(&self) -> Vec<(usize, usize)> {
+        let mut result = Vec::<(usize, usize)>::new();
+
+        for x in 0..self.ground_pathing.width {
+            for y in 0..self.ground_pathing.height {
+                if self.points[x][y].is_border {
+                    result.push((x, y));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// Finds the first reachable position within specified walking distance from the center point with lowest value
+    fn lowest_influence_walk(&self, map_type: u8, center: (f64, f64), distance: f64) -> ((usize, usize), f64) {
+        let map = self.get_map(map_type);
+        let center_int = (center.0.round() as usize, center.1.round() as usize);
+
+        return map.lowest_influence_walk(center_int, distance);
+    }
+
+    /// Finds the first reachable position within specified distance from the center point with lowest value
+    pub fn lowest_influence(&self, map_type: u8, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
+        let map = self.get_map(map_type);
+        return map.inline_lowest_value(center, distance);
+    }
+
+    /// Find the shortest path values without considering influence and returns the path and distance
+    pub fn find_path(&self,
+                     map_type: u8,
+                     start: (f64, f64),
+                     end: (f64, f64),
+                     possible_heuristic: Option<u8>)
+                     -> (Vec<(usize, usize)>, f64) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+
+        let map = self.get_map(map_type);
+        return map.find_path(start_int, end_int, possible_heuristic);
+    }
+
+    /// Find the shortest path values without considering influence and returns the path and distance
+    pub fn find_path_large(&self,
+                           map_type: u8,
+                           start: (f64, f64),
+                           end: (f64, f64),
+                           possible_heuristic: Option<u8>)
+                           -> (Vec<(usize, usize)>, f64) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+
+        let map = self.get_map(map_type);
+        return map.find_path_large(start_int, end_int, possible_heuristic);
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    pub fn find_path_influence(&self,
+                               map_type: u8,
+                               start: (f64, f64),
+                               end: (f64, f64),
+                               possible_heuristic: Option<u8>)
+                               -> (Vec<(usize, usize)>, f64) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+        let map = self.get_map(map_type);
+        return map.find_path_influence(start_int, end_int, possible_heuristic);
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    pub fn find_path_influence_large(&self,
+                                     map_type: u8,
+                                     start: (f64, f64),
+                                     end: (f64, f64),
+                                     possible_heuristic: Option<u8>)
+                                     -> (Vec<(usize, usize)>, f64) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+        let map = self.get_map(map_type);
+        return map.find_path_influence_large(start_int, end_int, possible_heuristic);
+    }
+
+    /// Finds a compromise where low influence matches with close position to the start position.
+    fn find_low_inside_walk(&self,
+                            map_type: u8,
+                            start: (f64, f64),
+                            target: (f64, f64),
+                            distance: f64)
+                            -> ((f64, f64), f64) {
+        let map = self.get_map(map_type);
+        return map.find_low_inside_walk(start, target, distance);
     }
 }
 
@@ -289,18 +380,21 @@ impl Map {
               chokes }
     }
 
-    fn get_borders(&self) -> Vec<(usize, usize)> {
-        let mut result = Vec::<(usize, usize)>::new();
-
-        for x in 0..self.ground_pathing.width {
-            for y in 0..self.ground_pathing.height {
-                if self.points[x][y].is_border {
-                    result.push((x, y));
-                }
-            }
+    fn get_map(&self, map_type: u8) -> &PathFind {
+        if map_type == 0 {
+            return &self.ground_pathing;
+        }
+        if map_type == 1 {
+            return &self.reaper_pathing;
+        }
+        if map_type == 2 {
+            return &self.colossus_pathing;
+        }
+        if map_type == 3 {
+            return &self.air_pathing;
         }
 
-        return result;
+        panic!("Map type {} does not exist", map_type.to_string());
     }
 }
 
@@ -399,9 +493,8 @@ mod tests {
         let grid2 = read_vec_from_file("tests/maze4x4.txt");
         let grid3 = read_vec_from_file("tests/maze4x4.txt");
         let map = Map::new(grid, grid2, grid3, 1, 1, 3, 3);
-        let path_find = map.ground_pathing;
-        let r = path_find.find_path((0, 0), (3, 3), Some(0));
-        let (_, distance) = r.unwrap();
+        let r = map.find_path(0, (0f64, 0f64), (3f64, 3f64), Some(0));
+        let (_, distance) = r;
         assert_eq!(distance, 6.0);
     }
 

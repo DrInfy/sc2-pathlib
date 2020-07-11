@@ -19,17 +19,25 @@ const MAPS_BOTH: usize = 3;
 
 #[pymethods]
 impl Map {
-    pub fn add_influence_walk(&mut self, positions: Vec<(usize, usize)>, influence: f64, distance: f64) {
+    pub fn normalize_influence(&mut self, value: usize) {
+        self.ground_pathing.normalize_influence(value);
+        self.air_pathing.normalize_influence(value);
+        self.colossus_pathing.normalize_influence(value);
+        self.reaper_pathing.normalize_influence(value);
+    }
+
+    pub fn add_influence_walk(&mut self, positions: Vec<(f64, f64)>, influence: f64, distance: f64) {
         let mult = 1.0 / distance;
         let max_int = influence as usize;
         let mut maps = self.get_ground_influence_maps();
 
-        for position in &positions {
+        for position_f in &positions {
+            let position = (position_f.0.round() as usize, position_f.1.round() as usize);
             if maps[0].map[position.0][position.1] == 0 {
                 continue;
             }
 
-            let destinations = maps[0].find_destinations_in_inline(*position, distance);
+            let destinations = maps[0].find_destinations_in_inline(position, distance);
             maps[0].map[position.0][position.1] += max_int;
 
             for destination in destinations {
@@ -46,7 +54,7 @@ impl Map {
         }
     }
 
-    pub fn add_influence_flat_hollow(&mut self, positions: Vec<(usize, usize)>, influence: f64, min: f64, max: f64) {
+    pub fn add_influence_flat_hollow(&mut self, positions: Vec<(f64, f64)>, influence: f64, min: f64, max: f64) {
         let value = influence as usize;
         let mult_min = min * pos::MULTF64;
         let mult_max = max * pos::MULTF64;
@@ -56,7 +64,8 @@ impl Map {
         let diameter = ((max * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
-        for position in positions {
+        for position_f in &positions {
+            let position = (position_f.0.round() as usize, position_f.1.round() as usize);
             let rect = rectangle::Rectangle::init_from_center2(position, rect_size, maps[0].width, maps[0].height);
 
             for x in rect.x..rect.x_end {
@@ -77,7 +86,7 @@ impl Map {
 
     pub fn add_influence_fading(&mut self,
                                 map_type: usize,
-                                positions: Vec<(usize, usize)>,
+                                positions: Vec<(f64, f64)>,
                                 influence: f64,
                                 min: f64,
                                 max: f64) {
@@ -100,7 +109,8 @@ impl Map {
         let diameter = ((max * 2f64) as usize) + 2;
         let rect_size = (diameter, diameter);
 
-        for position in positions {
+        for position_f in &positions {
+            let position = (position_f.0.round() as usize, position_f.1.round() as usize);
             let rect = rectangle::Rectangle::init_from_center2(position, rect_size, maps[0].width, maps[0].height);
 
             for x in rect.x..rect.x_end {

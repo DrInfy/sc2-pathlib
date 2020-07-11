@@ -74,7 +74,7 @@ impl PathFind {
     }
     // Removes multiple blocks on the grid and makes it pathable
     // center = center of block
-    pub fn remove_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
+    pub fn remove_blocks_rust(&mut self, centers: &[(f64, f64)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
@@ -88,7 +88,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
+    pub fn create_blocks_rust(&mut self, centers: &[(f64, f64)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
@@ -164,7 +164,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f64, f64), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -176,7 +176,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    fn create_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
+    pub fn create_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
@@ -190,7 +190,7 @@ impl PathFind {
 
     // Removes a block on the grid and makes it pathable
     // center = center of block
-    fn remove_block(&mut self, center: (f32, f32), size: (usize, usize)) {
+    pub fn remove_block(&mut self, center: (f64, f64), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -200,7 +200,7 @@ impl PathFind {
         }
     }
 
-    fn normalize_influence(&mut self, value: usize) {
+    pub fn normalize_influence(&mut self, value: usize) {
         self.normal_influence = value;
 
         for y in &mut self.map {
@@ -303,14 +303,13 @@ impl PathFind {
                 self.map[end_point.0][end_point.1] += max_int
             }
         }
-
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
-    fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
+    pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
         let corrected_center = self.get_closest_pathable(center);
 
-        return self.lowest_influence_walk_inline(corrected_center, distance)
+        return self.lowest_influence_walk_inline(corrected_center, distance);
     }
 
     #[inline]
@@ -341,12 +340,12 @@ impl PathFind {
     }
 
     /// Finds the first reachable position within specified distance from the center point with lowest value
-    fn lowest_influence(&self, center: (f32, f32), distance: usize) -> PyResult<((usize, usize), f64)> {
-        Ok(self.inline_lowest_value(center, distance))
+    fn lowest_influence(&self, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
+        self.inline_lowest_value(center, distance)
     }
 
     #[inline]
-    fn inline_lowest_value(&self, center: (f32, f32), distance: usize) -> ((usize, usize), f64) {
+    pub fn inline_lowest_value(&self, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
         let rect = rectangle::Rectangle::init_from_center(center, (distance, distance), self.width, self.height);
 
         let mut min_value = std::usize::MAX;
@@ -379,7 +378,7 @@ impl PathFind {
                      start: (usize, usize),
                      end: (usize, usize),
                      possible_heuristic: Option<u8>)
-                     -> PyResult<(Vec<(usize, usize)>, f64)> {
+                     -> (Vec<(usize, usize)>, f64) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -411,15 +410,15 @@ impl PathFind {
             }
         }
 
-        Ok((path, distance))
+        (path, distance)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
-    fn find_path_large(&self,
-                       start: (usize, usize),
-                       end: (usize, usize),
-                       possible_heuristic: Option<u8>)
-                       -> PyResult<(Vec<(usize, usize)>, f64)> {
+    pub fn find_path_large(&self,
+                           start: (usize, usize),
+                           end: (usize, usize),
+                           possible_heuristic: Option<u8>)
+                           -> (Vec<(usize, usize)>, f64) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -451,19 +450,19 @@ impl PathFind {
             }
         }
 
-        Ok((path, distance))
+        (path, distance)
     }
 
     /// Find the path using influence values and returns the path and distance
-    fn find_path_influence(&self,
-                           start: (usize, usize),
-                           end: (usize, usize),
-                           possible_heuristic: Option<u8>)
-                           -> PyResult<(Vec<(usize, usize)>, f64)> {
+    pub fn find_path_influence(&self,
+                               start: (usize, usize),
+                               end: (usize, usize),
+                               possible_heuristic: Option<u8>)
+                               -> (Vec<(usize, usize)>, f64) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
-        Ok(self.find_path_influence_inline(corrected_start, corrected_end, possible_heuristic))
+        self.find_path_influence_inline(corrected_start, corrected_end, possible_heuristic)
     }
 
     #[inline]
@@ -506,11 +505,11 @@ impl PathFind {
     }
 
     /// Find the path using influence values and returns the path and distance
-    fn find_path_influence_large(&self,
-                                 start: (usize, usize),
-                                 end: (usize, usize),
-                                 possible_heuristic: Option<u8>)
-                                 -> PyResult<(Vec<(usize, usize)>, f64)> {
+    pub fn find_path_influence_large(&self,
+                                     start: (usize, usize),
+                                     end: (usize, usize),
+                                     possible_heuristic: Option<u8>)
+                                     -> (Vec<(usize, usize)>, f64) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -544,7 +543,7 @@ impl PathFind {
             }
         }
 
-        Ok((path, distance))
+        (path, distance)
     }
 
     /// Finds all reachable destinations from selected start point. Ignores influence.
@@ -630,11 +629,7 @@ impl PathFind {
     }
 
     /// Finds a compromise where low influence matches with close position to the start position.
-    fn find_low_inside_walk(&self,
-                            start: (f64, f64),
-                            target: (f64, f64),
-                            distance: f64)
-                            -> PyResult<((f64, f64), f64)> {
+    pub fn find_low_inside_walk(&self, start: (f64, f64), target: (f64, f64), distance: f64) -> ((f64, f64), f64) {
         let start_int = (start.0 as usize, start.1 as usize);
         let target_int = (target.0 as usize, target.1 as usize);
 
@@ -662,7 +657,7 @@ impl PathFind {
 
         if destinations.is_empty() {
             // Cannot find path to target
-            Ok(((0.0, 0.0), -1.0))
+            return ((0.0, 0.0), -1.0);
         } else {
             let mut best_target: ((f64, f64), f64) = ((0.0, 0.0), -1.0);
 
@@ -702,7 +697,7 @@ impl PathFind {
                 }
             }
 
-            Ok(best_target)
+            return best_target;
         }
     }
 
