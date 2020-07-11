@@ -90,7 +90,8 @@ impl Map {
                                 influence: f64,
                                 min: f64,
                                 max: f64) {
-        let mult = 1.0 / ((max - min) * pos::MULTF64);
+        let mult = 1.0 / pos::MULTF64;
+        let mult2 = 1.0 / (max - min) ;
         let value = influence as usize;
         let mult_min = min * pos::MULTF64;
         let mult_max = max * pos::MULTF64;
@@ -126,10 +127,10 @@ impl Map {
                             }
                         } else {
                             // Fading threshold
-                            let value_fading = (influence * (1.0 - (d - min) * mult)) as usize;
+                            let value_fading = (influence * (1.0 - (d * mult - min) * mult2)) as usize;
                             for mapping in maps.iter_mut() {
                                 let old_val = mapping.map[x][y];
-                                if old_val > 0 {
+                                if old_val > 0 && value_fading > 0{
                                     mapping.map[x][y] = old_val + value_fading;
                                 }
                             }

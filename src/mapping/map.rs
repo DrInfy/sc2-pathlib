@@ -44,7 +44,16 @@ impl Map {
     }
 
     #[getter(ground_pathing)]
-    fn get_ground_pathing(&self) -> PyResult<Vec<Vec<usize>>> { Ok(self.ground_pathing.map.clone()) }
+    fn get_ground_pathing(&self) -> Vec<Vec<usize>> { self.ground_pathing.map.clone() }
+
+    #[getter(air_pathing)]
+    fn get_air_pathing(&self) -> Vec<Vec<usize>> { self.air_pathing.map.clone() }
+
+    #[getter(reaper_pathing)]
+    fn get_reaper_pathing(&self) -> Vec<Vec<usize>> { self.reaper_pathing.map.clone() }
+
+    #[getter(colossus_pathing)]
+    fn get_colossus_pathing(&self) -> Vec<Vec<usize>> { self.colossus_pathing.map.clone() }
 
     #[getter(overlord_spots)]
     fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }

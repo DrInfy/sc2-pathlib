@@ -81,7 +81,7 @@ class Sc2Map:
         :param tank_min_range: Tank minimum range is 2, adding both unit radiuses to that and we'll estimate it to be 3.
         :param tank_max_range: Same for max range, 13, but but with unit radius, let's say it's 14.5 instead to err on the safe side
         """
-        self._map.add_influence_flat_hollow(points, influence, tank_max_range, tank_max_range)
+        self._map.add_influence_flat_hollow(points, influence, tank_min_range, tank_max_range)
 
     def add_pure_ground_influence(
         self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float
@@ -173,8 +173,35 @@ class Sc2Map:
         """
 
         image = np.array(self._map.draw_climbs(), dtype=np.uint8)
-        image = np.rot90(image, 1)
         image = np.multiply(image, 42)
+        self.plot_image(image, image_name, resize)
+
+    def plot_ground_map(self, path: List[Tuple[int, int]], image_name: str = "ground_map", resize: int = 4):
+        image = np.array(self._map.ground_pathing, dtype=np.uint8)
+
+        for point in path:
+            image[point] = 255
+        self.plot_image(image, image_name, resize)
+
+    def plot_ground_map(self, path: List[Tuple[int, int]], image_name: str = "air_map", resize: int = 4):
+        image = np.array(self._map.air_pathing, dtype=np.uint8)
+
+        for point in path:
+            image[point] = 255
+        self.plot_image(image, image_name, resize)
+    
+    def plot_reaper_map(self, path: List[Tuple[int, int]], image_name: str = "air_map", resize: int = 4):
+        image = np.array(self._map.reaper_pathing, dtype=np.uint8)
+
+        for point in path:
+            image[point] = 255
+        self.plot_image(image, image_name, resize)
+
+    def plot_colossus_map(self, path: List[Tuple[int, int]], image_name: str = "air_map", resize: int = 4):
+        image = np.array(self._map.colossus_pathing, dtype=np.uint8)
+
+        for point in path:
+            image[point] = 255
         self.plot_image(image, image_name, resize)
 
     def plot_chokes(self, image_name: str = "map", resize: int = 4):
@@ -190,12 +217,12 @@ class Sc2Map:
         """
 
         image = np.array(self._map.draw_chokes(), dtype=np.uint8)
-        image = np.rot90(image, 1)
         # image = np.multiply(image, 42)
         self.plot_image(image, image_name, resize)
 
     def plot_image(self, image, image_name: str = "map", resize: int = 4):
         import cv2
+        image = np.rot90(image, 1)
 
         resized = cv2.resize(image, dsize=None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
         cv2.imshow(image_name, resized)
