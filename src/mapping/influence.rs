@@ -3,7 +3,7 @@ use crate::path_find::pos::{self, MULTF64};
 use crate::path_find::{octile_distance, rectangle, PathFind};
 use pyo3::prelude::*;
 
-extern crate test;
+// extern crate test;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
