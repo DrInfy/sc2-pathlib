@@ -3,7 +3,7 @@ use pathfinding::prelude::absdiff;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
-pub static MULTF64: f64 = 10000.0;
+pub static MULTF32: f32 = 10000.0;
 
 //constants
 pub static DIAGONAL_MINUS_CARDINAL: usize = 4142;
@@ -22,9 +22,9 @@ impl PosLarge {
         let a = self.0 - other.0;
         let b = self.1 - other.1;
         let dist2 = a * a + b * b;
-        ((dist2 as f64).sqrt() * MULTF64) as usize
+        ((dist2 as f32).sqrt() * MULTF32) as usize
 
-        // ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f64).sqrt() * MULTF64) as usize
+        // ((((self.0 - other.0).pow(2) + (self.1 - other.1).pow(2)) as f32).sqrt() * MULTF32) as usize
     }
 
     #[inline]
@@ -144,7 +144,7 @@ impl InfluencedPosLarge {
         let a = (self.0 - other.0) * normal_influence;
         let b = (self.1 - other.1) * normal_influence;
         let dist2 = a * a + b * b;
-        ((dist2 as f64).sqrt() * MULTF64) as usize
+        ((dist2 as f32).sqrt() * MULTF32) as usize
     }
 
     #[inline]

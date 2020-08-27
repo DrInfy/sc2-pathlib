@@ -1,5 +1,5 @@
 use crate::path_find::pos::Pos;
-use crate::path_find::pos::{self, MULTF64};
+use crate::path_find::pos::{self, MULTF32};
 use crate::path_find::{octile_distance, rectangle, PathFind};
 use pyo3::prelude::*;
 
@@ -26,7 +26,7 @@ impl Map {
         self.reaper_pathing.normalize_influence(value);
     }
 
-    pub fn add_influence_walk(&mut self, positions: Vec<(f64, f64)>, influence: f64, distance: f64) {
+    pub fn add_influence_walk(&mut self, positions: Vec<(f32, f32)>, influence: f32, distance: f32) {
         let mult = 1.0 / distance;
         let max_int = influence as usize;
         let mut maps = self.get_ground_influence_maps();
@@ -54,14 +54,14 @@ impl Map {
         }
     }
 
-    pub fn add_influence_flat_hollow(&mut self, positions: Vec<(f64, f64)>, influence: f64, min: f64, max: f64) {
+    pub fn add_influence_flat_hollow(&mut self, positions: Vec<(f32, f32)>, influence: f32, min: f32, max: f32) {
         let value = influence as usize;
-        let mult_min = min * pos::MULTF64;
-        let mult_max = max * pos::MULTF64;
+        let mult_min = min * pos::MULTF32;
+        let mult_max = max * pos::MULTF32;
         let mut maps: Vec<&mut PathFind>;
         maps = self.get_ground_influence_maps();
 
-        let diameter = ((max * 2f64) as usize) + 2;
+        let diameter = ((max * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position_f in &positions {
@@ -70,7 +70,7 @@ impl Map {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    let d = octile_distance(position, (x, y)) as f64;
+                    let d = octile_distance(position, (x, y)) as f32;
                     if d < mult_max && d > mult_min {
                         for mapping in maps.iter_mut() {
                             let old_val = mapping.map[x][y];
@@ -86,15 +86,15 @@ impl Map {
 
     pub fn add_influence_fading(&mut self,
                                 map_type: usize,
-                                positions: Vec<(f64, f64)>,
-                                influence: f64,
-                                min: f64,
-                                max: f64) {
-        let mult = 1.0 / pos::MULTF64;
+                                positions: Vec<(f32, f32)>,
+                                influence: f32,
+                                min: f32,
+                                max: f32) {
+        let mult = 1.0 / pos::MULTF32;
         let mult2 = 1.0 / (max - min) ;
         let value = influence as usize;
-        let mult_min = min * pos::MULTF64;
-        let mult_max = max * pos::MULTF64;
+        let mult_min = min * pos::MULTF32;
+        let mult_max = max * pos::MULTF32;
         let mut maps: Vec<&mut PathFind>;
 
         if map_type == MAPS_PURE_GROUND {
@@ -107,7 +107,7 @@ impl Map {
             maps = self.get_both_influence_maps();
         }
 
-        let diameter = ((max * 2f64) as usize) + 2;
+        let diameter = ((max * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position_f in &positions {
@@ -116,7 +116,7 @@ impl Map {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    let d = octile_distance(position, (x, y)) as f64;
+                    let d = octile_distance(position, (x, y)) as f32;
                     if d < mult_max {
                         if d < mult_min {
                             for mapping in maps.iter_mut() {
