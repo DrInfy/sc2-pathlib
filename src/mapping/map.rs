@@ -1,7 +1,7 @@
 use crate::path_find::PathFind;
 use pyo3::prelude::*;
 
-extern crate test;
+// extern crate test;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
@@ -59,7 +59,7 @@ impl Map {
     fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }
 
     #[getter(chokes)]
-    fn get_chokes(&self) -> Vec<Choke> { self.chokes.clone() }
+    pub fn get_chokes(&self) -> Vec<Choke> { self.chokes.clone() }
 
     fn draw_climbs(&self) -> Vec<Vec<usize>> {
         let width = self.ground_pathing.map.len();
@@ -234,14 +234,14 @@ impl Map {
 }
 
 impl Map {
-    fn new(pathing: Vec<Vec<usize>>,
-           placement: Vec<Vec<usize>>,
-           height_map: Vec<Vec<usize>>,
-           x_start: usize,
-           y_start: usize,
-           x_end: usize,
-           y_end: usize)
-           -> Self {
+    pub fn new(pathing: Vec<Vec<usize>>,
+               placement: Vec<Vec<usize>>,
+               height_map: Vec<Vec<usize>>,
+               x_start: usize,
+               y_start: usize,
+               x_end: usize,
+               y_end: usize)
+               -> Self {
         let width = pathing.len();
         let height = pathing[0].len();
         let mut points = vec![vec![map_point::MapPoint::new(); height]; width];
@@ -448,78 +448,4 @@ fn flood_fill_overlord(points: &mut Vec<Vec<map_point::MapPoint>>,
     // }
 
     return result;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs::File;
-    use std::io::{BufRead, BufReader};
-
-    fn read_vec_from_file(file_path: &str) -> Vec<Vec<usize>> {
-        let f = BufReader::new(File::open(file_path).unwrap());
-        let mut arr = Vec::<Vec<usize>>::new();
-
-        for line in f.lines().map(|x| x.unwrap()) {
-            let mut maze_line = vec![];
-            for mini_line in line.chars().map(|n| n.to_digit(2).unwrap()) {
-                maze_line.push(mini_line as usize)
-            }
-
-            arr.push(maze_line);
-        }
-        rotate90clockwise(arr)
-    }
-
-    fn rotate90clockwise(vec: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-        let N = vec[0].len();
-        let mut new_arr: Vec<Vec<usize>> = vec.clone();
-        // Traverse each cycle
-        for i in 0..(N / 2) {
-            for j in i..(N - i - 1) {
-                let temp = vec[i][j];
-                new_arr[i][j] = vec[N - 1 - j][i];
-                new_arr[N - 1 - j][i] = vec[N - 1 - i][N - 1 - j];
-                new_arr[N - 1 - i][N - 1 - j] = vec[j][N - 1 - i];
-                new_arr[j][N - 1 - j] = temp;
-            }
-        }
-        new_arr
-    }
-
-    fn get_choke_map() -> Map {
-        let grid = read_vec_from_file("tests/choke.txt");
-        let grid2 = read_vec_from_file("tests/choke.txt");
-        let grid3 = read_vec_from_file("tests/choke.txt");
-
-        let map = Map::new(grid, grid2, grid3, 2, 2, 38, 38);
-        return map;
-    }
-
-    #[test]
-    fn test_find_path_map() {
-        let grid = read_vec_from_file("tests/maze4x4.txt");
-        let grid2 = read_vec_from_file("tests/maze4x4.txt");
-        let grid3 = read_vec_from_file("tests/maze4x4.txt");
-        let map = Map::new(grid, grid2, grid3, 1, 1, 3, 3);
-        let r = map.find_path(0, (0f64, 0f64), (3f64, 3f64), Some(0));
-        let (_, distance) = r;
-        assert_eq!(distance, 6.0);
-    }
-
-    // Test not working, ignored for now.
-    // #[test]
-    fn test_find_map_borders() {
-        let map = get_choke_map();
-        let r = map.get_borders();
-        assert_eq!(r.len(), 20 + 16);
-    }
-
-    // Test not working, ignored for now.
-    // #[test]
-    fn test_find_map_chokes() {
-        let map = get_choke_map();
-        let r = map.get_chokes();
-        assert_eq!(r.len(), 1);
-    }
 }
