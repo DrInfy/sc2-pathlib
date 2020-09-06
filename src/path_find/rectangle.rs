@@ -9,14 +9,14 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    pub fn init_from_center(center: (f64, f64), size: (usize, usize), width: usize, height: usize) -> Rectangle {
+    pub fn init_from_center(center: (f32, f32), size: (usize, usize), width: usize, height: usize) -> Rectangle {
         let pos_x: usize = center.0 as usize;
         let pos_y: usize = center.1 as usize;
 
         let w: usize = size.0;
         let h: usize = size.1;
-        let x: usize = max(0, (pos_x as f64 - (w as f64 / 2_f64)).ceil() as usize);
-        let y: usize = max(0, (pos_y as f64 - (h as f64 / 2_f64)).ceil() as usize);
+        let x: usize = max(0, (pos_x as f32 - (w as f32 / 2_f32)).ceil() as usize);
+        let y: usize = max(0, (pos_y as f32 - (h as f32 / 2_f32)).ceil() as usize);
         let x_end: usize = min(width, w + x);
         let y_end: usize = min(height, h + y);
 
@@ -32,8 +32,8 @@ impl Rectangle {
 
         let w: usize = size.0;
         let h: usize = size.1;
-        let x: usize = f64::max(0.0, (pos_x as f64 - (w as f64 / 2_f64)).ceil()) as usize;
-        let y: usize = f64::max(0.0, (pos_y as f64 - (h as f64 / 2_f64)).ceil()) as usize;
+        let x: usize = f32::max(0.0, (pos_x as f32 - (w as f32 / 2_f32)).ceil()) as usize;
+        let y: usize = f32::max(0.0, (pos_y as f32 - (h as f32 / 2_f32)).ceil()) as usize;
         let x_end: usize = min(width, w + x);
         let y_end: usize = min(height, h + y);
 

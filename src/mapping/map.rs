@@ -21,7 +21,7 @@ pub struct Map {
     pub colossus_pathing: PathFind,
     pub reaper_pathing: PathFind,
     pub points: Vec<Vec<map_point::MapPoint>>,
-    pub overlord_spots: Vec<(f64, f64)>,
+    pub overlord_spots: Vec<(f32, f32)>,
     #[pyo3(get, set)]
     pub influence_colossus_map: bool,
     #[pyo3(get, set)]
@@ -56,7 +56,7 @@ impl Map {
     fn get_colossus_pathing(&self) -> Vec<Vec<usize>> { self.colossus_pathing.map.clone() }
 
     #[getter(overlord_spots)]
-    fn get_overlord_spots(&self) -> Vec<(f64, f64)> { self.overlord_spots.clone() }
+    fn get_overlord_spots(&self) -> Vec<(f32, f32)> { self.overlord_spots.clone() }
 
     #[getter(chokes)]
     pub fn get_chokes(&self) -> Vec<Choke> { self.chokes.clone() }
@@ -121,19 +121,19 @@ impl Map {
         self.reaper_pathing.reset_void();
     }
 
-    pub fn create_block(&mut self, center: (f64, f64), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
         self.ground_pathing.create_block(center, size);
         self.colossus_pathing.create_block(center, size);
         self.reaper_pathing.create_block(center, size);
     }
 
-    pub fn create_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
+    pub fn create_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
         self.ground_pathing.create_blocks_rust(&centers, size);
         self.colossus_pathing.create_blocks_rust(&centers, size);
         self.reaper_pathing.create_blocks_rust(&centers, size);
     }
 
-    pub fn remove_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
+    pub fn remove_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
         self.ground_pathing.remove_blocks_rust(&centers, size);
         self.colossus_pathing.remove_blocks_rust(&centers, size);
         self.reaper_pathing.remove_blocks_rust(&centers, size);
@@ -154,7 +154,7 @@ impl Map {
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
-    fn lowest_influence_walk(&self, map_type: u8, center: (f64, f64), distance: f64) -> ((usize, usize), f64) {
+    fn lowest_influence_walk(&self, map_type: u8, center: (f32, f32), distance: f32) -> ((usize, usize), f32) {
         let map = self.get_map(map_type);
         let center_int = (center.0.round() as usize, center.1.round() as usize);
 
@@ -162,7 +162,7 @@ impl Map {
     }
 
     /// Finds the first reachable position within specified distance from the center point with lowest value
-    pub fn lowest_influence(&self, map_type: u8, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
+    pub fn lowest_influence(&self, map_type: u8, center: (f32, f32), distance: usize) -> ((usize, usize), f32) {
         let map = self.get_map(map_type);
         return map.inline_lowest_value(center, distance);
     }
@@ -170,10 +170,10 @@ impl Map {
     /// Find the shortest path values without considering influence and returns the path and distance
     pub fn find_path(&self,
                      map_type: u8,
-                     start: (f64, f64),
-                     end: (f64, f64),
+                     start: (f32, f32),
+                     end: (f32, f32),
                      possible_heuristic: Option<u8>)
-                     -> (Vec<(usize, usize)>, f64) {
+                     -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
@@ -184,10 +184,10 @@ impl Map {
     /// Find the shortest path values without considering influence and returns the path and distance
     pub fn find_path_large(&self,
                            map_type: u8,
-                           start: (f64, f64),
-                           end: (f64, f64),
+                           start: (f32, f32),
+                           end: (f32, f32),
                            possible_heuristic: Option<u8>)
-                           -> (Vec<(usize, usize)>, f64) {
+                           -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
@@ -198,10 +198,10 @@ impl Map {
     /// Find the path using influence values and returns the path and distance
     pub fn find_path_influence(&self,
                                map_type: u8,
-                               start: (f64, f64),
-                               end: (f64, f64),
+                               start: (f32, f32),
+                               end: (f32, f32),
                                possible_heuristic: Option<u8>)
-                               -> (Vec<(usize, usize)>, f64) {
+                               -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
@@ -211,10 +211,10 @@ impl Map {
     /// Find the path using influence values and returns the path and distance
     pub fn find_path_influence_large(&self,
                                      map_type: u8,
-                                     start: (f64, f64),
-                                     end: (f64, f64),
+                                     start: (f32, f32),
+                                     end: (f32, f32),
                                      possible_heuristic: Option<u8>)
-                                     -> (Vec<(usize, usize)>, f64) {
+                                     -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
@@ -224,10 +224,10 @@ impl Map {
     /// Finds a compromise where low influence matches with close position to the start position.
     fn find_low_inside_walk(&self,
                             map_type: u8,
-                            start: (f64, f64),
-                            target: (f64, f64),
-                            distance: f64)
-                            -> ((f64, f64), f64) {
+                            start: (f32, f32),
+                            target: (f32, f32),
+                            distance: f32)
+                            -> ((f32, f32), f32) {
         let map = self.get_map(map_type);
         return map.find_low_inside_walk(start, target, distance);
     }
@@ -250,7 +250,7 @@ impl Map {
         let mut border_map = vec![vec![0; height]; width];
         let mut fly_map = vec![vec![0; height]; width];
         let mut reaper_map = vec![vec![0; height]; width];
-        let mut overlord_spots: Vec<(f64, f64)> = Vec::new();
+        let mut overlord_spots: Vec<(f32, f32)> = Vec::new();
 
         let mut choke_lines = Vec::<((usize, usize), (usize, usize))>::new();
         let x_left_border = x_start - 1;
@@ -351,16 +351,16 @@ impl Map {
                     let mut set: HashSet<usize> = HashSet::new();
 
                     if flood_fill_overlord(&mut points, x, y, target_height, true, &mut set) {
-                        let mut spot = (0_f64, 0_f64);
+                        let mut spot = (0_f32, 0_f32);
                         let count = set.len();
                         for value in set {
                             set_handled_overlord_spots.insert(value);
-                            let cx = (value % Y_MULT) as f64;
-                            let cy = (value / Y_MULT) as f64;
+                            let cx = (value % Y_MULT) as f32;
+                            let cy = (value / Y_MULT) as f32;
                             spot = (spot.0 + cx, spot.1 + cy);
                         }
 
-                        spot = (spot.0 / count as f64, spot.1 / count as f64);
+                        spot = (spot.0 / count as f32, spot.1 / count as f32);
                         overlord_spots.push(spot);
                     } else {
                         set.clear();

@@ -3,7 +3,7 @@ use pathfinding::prelude::absdiff;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
-pub static MULTF64: f64 = 10000.0;
+pub static MULTF32: f32 = 10000.0;
 
 //constants
 pub static DIAGONAL_MINUS_CARDINAL: usize = 4142;
@@ -19,10 +19,10 @@ impl Pos {
 
     #[inline]
     pub fn euclidean_distance(&self, other: &Pos) -> usize {
-        let a = self.0 as f64 - other.0 as f64;
-        let b = self.1 as f64 - other.1 as f64;
+        let a = self.0 as f32 - other.0 as f32;
+        let b = self.1 as f32 - other.1 as f32;
         let dist2 = a * a + b * b;
-        (dist2.sqrt() * MULTF64) as usize
+        (dist2.sqrt() * MULTF32) as usize
     }
 
     #[inline]
@@ -129,7 +129,7 @@ impl InfluencedPos {
         let a = (self.0 - other.0) * normal_influence;
         let b = (self.1 - other.1) * normal_influence;
         let dist2 = a * a + b * b;
-        ((dist2 as f64).sqrt() * MULTF64) as usize
+        ((dist2 as f32).sqrt() * MULTF32) as usize
     }
 
     #[inline]
@@ -236,7 +236,7 @@ impl InvertPos {
         let a = self.0 - other.0;
         let b = self.1 - other.1;
         let dist2 = a * a + b * b;
-        ((dist2 as f64).sqrt() * MULTF64) as usize
+        ((dist2 as f32).sqrt() * MULTF32) as usize
     }
 
     #[inline]

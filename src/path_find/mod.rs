@@ -31,12 +31,12 @@ pub fn octile_distance(first: (usize, usize), other: (usize, usize)) -> usize {
 }
 
 #[inline]
-pub fn octile_distance_f64(first: (usize, usize), other: (usize, usize)) -> f64 {
-    (octile_distance(first, other) as f64) / pos::MULTF64
+pub fn octile_distance_f32(first: (usize, usize), other: (usize, usize)) -> f32 {
+    (octile_distance(first, other) as f32) / pos::MULTF32
 }
 
 #[inline]
-pub fn euclidean_distance(first: (f64, f64), other: (f64, f64)) -> f64 {
+pub fn euclidean_distance(first: (f32, f32), other: (f32, f32)) -> f32 {
     let a = first.0 - other.0;
     let b = first.1 - other.1;
     let dist2 = a * a + b * b;
@@ -74,7 +74,7 @@ impl PathFind {
     }
     // Removes multiple blocks on the grid and makes it pathable
     // center = center of block
-    pub fn remove_blocks_rust(&mut self, centers: &[(f64, f64)], size: (usize, usize)) {
+    pub fn remove_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
@@ -88,7 +88,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_blocks_rust(&mut self, centers: &[(f64, f64)], size: (usize, usize)) {
+    pub fn create_blocks_rust(&mut self, centers: &[(f32, f32)], size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(*center, size, self.width, self.height);
 
@@ -164,7 +164,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_block(&mut self, center: (f64, f64), size: (usize, usize)) {
+    pub fn create_block(&mut self, center: (f32, f32), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -176,7 +176,7 @@ impl PathFind {
 
     // Creates a block on the grid that is not pathable
     // center = center of building
-    pub fn create_blocks(&mut self, centers: Vec<(f64, f64)>, size: (usize, usize)) {
+    pub fn create_blocks(&mut self, centers: Vec<(f32, f32)>, size: (usize, usize)) {
         for center in centers {
             let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
@@ -190,7 +190,7 @@ impl PathFind {
 
     // Removes a block on the grid and makes it pathable
     // center = center of block
-    pub fn remove_block(&mut self, center: (f64, f64), size: (usize, usize)) {
+    pub fn remove_block(&mut self, center: (f32, f32), size: (usize, usize)) {
         let rect = rectangle::Rectangle::init_from_center(center, size, self.width, self.height);
 
         for x in rect.x..rect.x_end {
@@ -213,9 +213,9 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
-        let mult = 1.0 / (distance * pos::MULTF64);
-        let diameter = ((distance * 2f64) as usize) + 2;
+    pub fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+        let mult = 1.0 / (distance * pos::MULTF32);
+        let diameter = ((distance * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
@@ -223,7 +223,7 @@ impl PathFind {
 
             for x in rect.x..rect.x_end {
                 for y in rect.y..rect.y_end {
-                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f64) * mult);
+                    let value = max * (1.0 - (octile_distance(position, (x, y)) as f32) * mult);
                     if value > 0.0 && self.map[x][y] > 0 {
                         self.map[x][y] += value as usize;
                     }
@@ -235,19 +235,19 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+    pub fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
         let value = max as usize;
-        let mult_distance = distance * pos::MULTF64;
+        let mult_distance = distance * pos::MULTF32;
 
-        let diameter = ((distance * 2f64) as usize) + 2;
+        let diameter = ((distance * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
 
         for position in positions {
             let rect = rectangle::Rectangle::init_from_center2(position, rect_size, self.width, self.height);
 
             for x in rect.x..rect.x_end {
-                for y in rect.y..rect.y_end {
-                    if (octile_distance(position, (x, y)) as f64) < mult_distance {
+                for y in rect.y..rect.y_end {                        
+                    if (octile_distance(position, (x, y)) as f32) < mult_distance {
                         self.map[x][y] += value;
                     }
                 }
@@ -258,7 +258,7 @@ impl PathFind {
     }
 
     /// Adds influence based on walk distance
-    fn add_walk_influence(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) -> PyResult<()> {
+    pub fn add_walk_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
         let mult = 1.0 / distance;
         let max_int = max as usize;
 
@@ -285,7 +285,7 @@ impl PathFind {
     }
 
     /// Adds influence based on walk distance
-    fn add_walk_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f64, distance: f64) {
+    pub fn add_walk_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) {
         let max_int = max as usize;
 
         for position in &positions {
@@ -306,18 +306,18 @@ impl PathFind {
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
-    pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
+    pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f32) -> ((usize, usize), f32) {
         let corrected_center = self.get_closest_pathable(center);
 
         return self.lowest_influence_walk_inline(corrected_center, distance);
     }
 
     #[inline]
-    fn lowest_influence_walk_inline(&self, center: (usize, usize), distance: f64) -> ((usize, usize), f64) {
+    fn lowest_influence_walk_inline(&self, center: (usize, usize), distance: f32) -> ((usize, usize), f32) {
         let destinations = self.find_destinations_in_inline(center, distance);
 
         let mut min_value = std::usize::MAX;
-        let mut min_distance = std::f64::MAX;
+        let mut min_distance = std::f32::MAX;
         let mut min_position = center;
 
         for destination in destinations {
@@ -340,12 +340,12 @@ impl PathFind {
     }
 
     /// Finds the first reachable position within specified distance from the center point with lowest value
-    fn lowest_influence(&self, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
+    pub fn lowest_influence(&self, center: (f32, f32), distance: usize) -> ((usize, usize), f32) {
         self.inline_lowest_value(center, distance)
     }
 
     #[inline]
-    pub fn inline_lowest_value(&self, center: (f64, f64), distance: usize) -> ((usize, usize), f64) {
+    pub fn inline_lowest_value(&self, center: (f32, f32), distance: usize) -> ((usize, usize), f32) {
         let rect = rectangle::Rectangle::init_from_center(center, (distance, distance), self.width, self.height);
 
         let mut min_value = std::usize::MAX;
@@ -370,7 +370,7 @@ impl PathFind {
             }
         }
 
-        (min_position, min_distance as f64 / pos::MULTF64)
+        (min_position, min_distance as f32 / pos::MULTF32)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
@@ -378,7 +378,7 @@ impl PathFind {
                      start: (usize, usize),
                      end: (usize, usize),
                      possible_heuristic: Option<u8>)
-                     -> (Vec<(usize, usize)>, f64) {
+                     -> (Vec<(usize, usize)>, f32) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -394,7 +394,7 @@ impl PathFind {
         };
 
         let mut path: Vec<(usize, usize)>;
-        let distance: f64;
+        let distance: f32;
 
         match result {
             None => {
@@ -402,7 +402,7 @@ impl PathFind {
                 distance = 0.0
             }
             Some(t) => {
-                distance = (t.1 as f64) / pos::MULTF64;
+                distance = (t.1 as f32) / pos::MULTF32;
                 path = Vec::<(usize, usize)>::with_capacity(t.0.len());
                 for pos in t.0 {
                     path.push((pos.0, pos.1))
@@ -418,7 +418,7 @@ impl PathFind {
                            start: (usize, usize),
                            end: (usize, usize),
                            possible_heuristic: Option<u8>)
-                           -> (Vec<(usize, usize)>, f64) {
+                           -> (Vec<(usize, usize)>, f32) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -434,7 +434,7 @@ impl PathFind {
         };
 
         let mut path: Vec<(usize, usize)>;
-        let distance: f64;
+        let distance: f32;
 
         match result {
             None => {
@@ -442,7 +442,7 @@ impl PathFind {
                 distance = 0.0
             }
             Some(t) => {
-                distance = (t.1 as f64) / pos::MULTF64;
+                distance = (t.1 as f32) / pos::MULTF32;
                 path = Vec::<(usize, usize)>::with_capacity(t.0.len());
                 for pos in t.0 {
                     path.push((pos.0, pos.1))
@@ -458,7 +458,7 @@ impl PathFind {
                                start: (usize, usize),
                                end: (usize, usize),
                                possible_heuristic: Option<u8>)
-                               -> (Vec<(usize, usize)>, f64) {
+                               -> (Vec<(usize, usize)>, f32) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -470,7 +470,7 @@ impl PathFind {
                                   corrected_start: (usize, usize),
                                   corrected_end: (usize, usize),
                                   possible_heuristic: Option<u8>)
-                                  -> (Vec<(usize, usize)>, f64) {
+                                  -> (Vec<(usize, usize)>, f32) {
         let start = pos::InfluencedPos(corrected_start.0, corrected_start.1);
         let goal = pos::InfluencedPos(corrected_end.0, corrected_end.1);
         let grid: &Vec<Vec<usize>> = &self.map;
@@ -485,7 +485,7 @@ impl PathFind {
         };
 
         let mut path: Vec<(usize, usize)>;
-        let distance: f64;
+        let distance: f32;
 
         match result {
             None => {
@@ -493,7 +493,7 @@ impl PathFind {
                 distance = 0.0
             }
             Some(t) => {
-                distance = (t.1 as f64) / pos::MULTF64;
+                distance = (t.1 as f32) / pos::MULTF32;
                 path = Vec::<(usize, usize)>::with_capacity(t.0.len());
                 for pos in t.0 {
                     path.push((pos.0, pos.1))
@@ -509,7 +509,7 @@ impl PathFind {
                                      start: (usize, usize),
                                      end: (usize, usize),
                                      possible_heuristic: Option<u8>)
-                                     -> (Vec<(usize, usize)>, f64) {
+                                     -> (Vec<(usize, usize)>, f32) {
         let corrected_start = self.get_closest_pathable(start);
         let corrected_end = self.get_closest_pathable(end);
 
@@ -527,7 +527,7 @@ impl PathFind {
         };
 
         let mut path: Vec<(usize, usize)>;
-        let distance: f64;
+        let distance: f32;
 
         match result {
             None => {
@@ -535,7 +535,7 @@ impl PathFind {
                 distance = 0.0
             }
             Some(t) => {
-                distance = (t.1 as f64) / pos::MULTF64;
+                distance = (t.1 as f32) / pos::MULTF32;
                 path = Vec::<(usize, usize)>::with_capacity(t.0.len());
                 for pos in t.0 {
                     path.push((pos.0, pos.1))
@@ -547,18 +547,18 @@ impl PathFind {
     }
 
     /// Finds all reachable destinations from selected start point. Ignores influence.
-    fn find_all_destinations(&self, start: (usize, usize)) -> PyResult<Vec<((usize, usize), f64)>> {
+    pub fn find_all_destinations(&self, start: (usize, usize)) -> PyResult<Vec<((usize, usize), f32)>> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let grid: &Vec<Vec<usize>> = &self.map;
         let result = dijkstra_all(&start, |p| p.successors(&grid));
 
-        let mut destination_collection: Vec<((usize, usize), f64)> =
-            Vec::<((usize, usize), f64)>::with_capacity(result.len());
+        let mut destination_collection: Vec<((usize, usize), f32)> =
+            Vec::<((usize, usize), f32)>::with_capacity(result.len());
 
         for found_path in result {
             let x = ((found_path.1).0).0;
             let y = ((found_path.1).0).1;
-            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            let d = ((found_path.1).1 as f32) / pos::MULTF32;
             destination_collection.push(((x, y), d));
         }
 
@@ -566,26 +566,26 @@ impl PathFind {
     }
 
     /// Finds all reachable destinations from selected start point. Ignores influence.
-    fn find_destinations_in(&self, start: (usize, usize), distance: f64) -> PyResult<Vec<((usize, usize), f64)>> {
+    pub fn find_destinations_in(&self, start: (usize, usize), distance: f32) -> PyResult<Vec<((usize, usize), f32)>> {
         Ok(self.find_destinations_in_inline(start, distance))
     }
 
     #[inline]
-    pub fn find_destinations_in_inline(&self, start: (usize, usize), distance: f64) -> Vec<((usize, usize), f64)> {
+    pub fn find_destinations_in_inline(&self, start: (usize, usize), distance: f32) -> Vec<((usize, usize), f32)> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance * pos::MULTF64) as usize;
+        let grid = &self.map;
+        let u_distance = (distance * pos::MULTF32) as usize;
 
         let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
 
         let hash_map = result.0;
-        let mut destination_collection: Vec<((usize, usize), f64)> =
-            Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+        let mut destination_collection: Vec<((usize, usize), f32)> =
+            Vec::<((usize, usize), f32)>::with_capacity(hash_map.len());
 
         for found_path in hash_map {
             let x = (found_path.0).0;
             let y = (found_path.0).1;
-            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            let d = ((found_path.1).1 as f32) / pos::MULTF32;
             destination_collection.push(((x, y), d));
         }
 
@@ -595,24 +595,24 @@ impl PathFind {
     #[inline]
     fn find_destinations_in_inline_influence(&self,
                                              start: (usize, usize),
-                                             distance: f64)
-                                             -> Vec<((usize, usize), f64)> {
+                                             distance: f32)
+                                             -> Vec<((usize, usize), f32)> {
         let start: pos::InfluencedPos = pos::InfluencedPos(start.0, start.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance * (self.normal_influence as f64) * pos::MULTF64) as usize;
+        let grid = &self.map;
+        let u_distance = (distance * (self.normal_influence as f32) * pos::MULTF32) as usize;
 
         let result = dijkstra_partial(&start,
                                       |p| p.successors(&grid),
                                       |p| p.octile_distance(&start, self.normal_influence) > u_distance);
 
         let hash_map = result.0;
-        let mut destination_collection: Vec<((usize, usize), f64)> =
-            Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+        let mut destination_collection: Vec<((usize, usize), f32)> =
+            Vec::<((usize, usize), f32)>::with_capacity(hash_map.len());
 
         for found_path in hash_map {
             let x = (found_path.0).0;
             let y = (found_path.0).1;
-            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            let d = ((found_path.1).1 as f32) / pos::MULTF32;
             destination_collection.push(((x, y), d));
         }
 
@@ -629,7 +629,7 @@ impl PathFind {
     }
 
     /// Finds a compromise where low influence matches with close position to the start position.
-    pub fn find_low_inside_walk(&self, start: (f64, f64), target: (f64, f64), distance: f64) -> ((f64, f64), f64) {
+    pub fn find_low_inside_walk(&self, start: (f32, f32), target: (f32, f32), distance: f32) -> ((f32, f32), f32) {
         let start_int = (start.0 as usize, start.1 as usize);
         let target_int = (target.0 as usize, target.1 as usize);
 
@@ -637,7 +637,7 @@ impl PathFind {
 
         let corrected_start = self.get_closest_pathable(start_int);
         let corrected_target = self.get_closest_pathable(target_int);
-        let angle = angles::angle_between_f64(start, target);
+        let angle = angles::angle_between_f32(start, target);
         let u_distance = distance as usize;
         let rect = rectangle::Rectangle::init_from_center2(corrected_target,
                                                            (u_distance, u_distance),
@@ -659,40 +659,38 @@ impl PathFind {
             // Cannot find path to target
             return ((0.0, 0.0), -1.0);
         } else {
-            let mut best_target: ((f64, f64), f64) = ((0.0, 0.0), -1.0);
+            let mut best_target: ((f32, f32), f32) = ((0.0, 0.0), -1.0);
 
             // Get a backup position that's closest to start up position
             for destination in destinations {
                 let point = destination.0;
-                let distance_from_start = octile_distance_f64(start_int, point);
+                let distance_from_start = octile_distance_f32(start_int, point);
 
                 if distance_from_start < best_target.1 || best_target.1 < 0.0 {
-                    let point_f64 = (point.0 as f64 + 0.5, point.1 as f64 + 0.5);
-                    best_target = (point_f64, distance_from_start);
+                    let point_f32 = (point.0 as f32 + 0.5, point.1 as f32 + 0.5);
+                    best_target = (point_f32, distance_from_start);
                 }
             }
 
-            //let best_path = self.find_path_influence_inline(corrected_start, best_target.0, Some(1u8));
 
             if current_distance < distance + 4.0 {
                 let best_influence = self.map[(best_target.0).0 as usize][(best_target.0).1 as usize];
                 //let mut best_distance_from_target = octile_distance_f64(best_target.0, target_int);
                 let destinations_from_start = self.find_destinations_in_inline(corrected_start, 5.0);
                 let mut angle_distance =
-                    angles::angle_distance(angle, angles::angle_between_f64(best_target.0, target));
-                let mut best_score = best_influence as f64 * (1.0 + angle_distance * 0.25);
+                    angles::angle_distance(angle, angles::angle_between_f32(best_target.0, target));
+                let mut best_score = best_influence as f32 * (1.0 + angle_distance * 0.25);
 
                 for destination in destinations_from_start {
                     let point = destination.0;
-                    let point_f64 = (point.0 as f64 + 0.5, point.1 as f64 + 0.5);
+                    let point_f32 = (point.0 as f32 + 0.5, point.1 as f32 + 0.5);
                     let influence = self.map[point.0][point.1];
-                    //let distance_from_target = euclidean_distance(point_f64, target);
-                    angle_distance = angles::angle_distance(angle, angles::angle_between_f64(point_f64, target));
-                    let score = influence as f64 * (1.0 + angle_distance * 0.25);
+                    angle_distance = angles::angle_distance(angle, angles::angle_between_f32(point_f32, target));
+                    let score = influence as f32 * (1.0 + angle_distance * 0.25);
 
                     if score < best_score {
                         best_score = score;
-                        best_target = (point_f64, destination.1);
+                        best_target = (point_f32, destination.1);
                     }
                 }
             }
@@ -701,44 +699,44 @@ impl PathFind {
         }
     }
 
-    pub fn invert_djiktra(&self, start: (f64, f64), distance: f64) -> Vec<((usize, usize), f64)> {
+    pub fn invert_djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
         let start_int = (start.0 as usize, start.1 as usize);
         let start: pos::InvertPos = pos::InvertPos(start_int.0, start_int.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance * pos::MULTF64) as usize;
+        let grid = &self.map;
+        let u_distance = (distance * pos::MULTF32) as usize;
 
         let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
 
         let hash_map = result.0;
-        let mut destination_collection: Vec<((usize, usize), f64)> =
-            Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+        let mut destination_collection: Vec<((usize, usize), f32)> =
+            Vec::<((usize, usize), f32)>::with_capacity(hash_map.len());
 
         for found_path in hash_map {
             let x = (found_path.0).0;
             let y = (found_path.0).1;
-            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            let d = ((found_path.1).1 as f32) / pos::MULTF32;
             destination_collection.push(((x, y), d));
         }
 
         return destination_collection;
     }
 
-    pub fn djiktra(&self, start: (f64, f64), distance: f64) -> Vec<((usize, usize), f64)> {
+    pub fn djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
         let start_int = (start.0 as usize, start.1 as usize);
         let start: pos::Pos = pos::Pos(start_int.0, start_int.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance * pos::MULTF64) as usize;
+        let grid = &self.map;
+        let u_distance = (distance * pos::MULTF32) as usize;
 
         let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
 
         let hash_map = result.0;
-        let mut destination_collection: Vec<((usize, usize), f64)> =
-            Vec::<((usize, usize), f64)>::with_capacity(hash_map.len());
+        let mut destination_collection: Vec<((usize, usize), f32)> =
+            Vec::<((usize, usize), f32)>::with_capacity(hash_map.len());
 
         for found_path in hash_map {
             let x = (found_path.0).0;
             let y = (found_path.0).1;
-            let d = ((found_path.1).1 as f64) / pos::MULTF64;
+            let d = ((found_path.1).1 as f32) / pos::MULTF32;
             destination_collection.push(((x, y), d));
         }
 

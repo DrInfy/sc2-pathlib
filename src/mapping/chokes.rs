@@ -1,6 +1,6 @@
 use crate::mapping::map_point;
 use crate::path_find::pos::Pos;
-use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF64, SQRT2};
+use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF32, SQRT2};
 use crate::path_find::PathFind;
 use pathfinding::prelude::absdiff;
 use pyo3::prelude::*;
@@ -17,11 +17,11 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     x_end: usize,
                     y_end: usize) {
     let pos_start = Pos(x, y);
-    let choke_distance = 13f64;
-    let choke_border_distance = 30f64;
+    let choke_distance = 13f32;
+    let choke_border_distance = 30f32;
 
     if points[pos_start.0][pos_start.1].is_border {
-        let reachable_borders = ground_pathing.djiktra((x as f64, y as f64), choke_border_distance);
+        let reachable_borders = ground_pathing.djiktra((x as f32, y as f32), choke_border_distance);
         let xmin = x;
         let xmax = cmp::min(x as i64 + choke_distance as i64, x_end as i64) as usize;
         let ymin = cmp::max(y as i64 - choke_distance as i64, y_start as i64) as usize;
@@ -35,9 +35,9 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                 }
 
                 let pos = Pos(x_new, y_new);
-                let flight_distance = pos.euclidean_distance(&pos_start) as f64 / MULTF64;
+                let flight_distance = pos.euclidean_distance(&pos_start) as f32 / MULTF32;
 
-                if flight_distance > choke_distance || flight_distance < 2f64 {
+                if flight_distance > choke_distance || flight_distance < 2f32 {
                     continue;
                 }
 
@@ -55,12 +55,12 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
 
                 let dots = flight_distance as i64;
                 let unit_vector =
-                    ((pos.0 as f64 - x as f64) / flight_distance, (pos.1 as f64 - y as f64) / flight_distance);
+                    ((pos.0 as f32 - x as f32) / flight_distance, (pos.1 as f32 - y as f32) / flight_distance);
                 let mut wall_hit = false;
 
                 for i in 1..dots {
-                    let draw_x = (x as f64 + unit_vector.0 * i as f64) as usize;
-                    let draw_y = (y as f64 + unit_vector.1 * i as f64) as usize;
+                    let draw_x = (x as f32 + unit_vector.0 * i as f32) as usize;
+                    let draw_y = (y as f32 + unit_vector.1 * i as f32) as usize;
                     if (draw_x == x && draw_y == y) || (draw_x == pos.0 && draw_y == pos.1) {
                         continue;
                     }
@@ -76,8 +76,8 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     let perdicular_unit_vector = (-unit_vector.1, unit_vector.0);
                     let half_dots = dots / 2;
                     for i in -half_dots..half_dots {
-                        let draw_x = (center.0 as f64 + perdicular_unit_vector.0 * i as f64) as usize;
-                        let draw_y = (center.1 as f64 + perdicular_unit_vector.1 * i as f64) as usize;
+                        let draw_x = (center.0 as f32 + perdicular_unit_vector.0 * i as f32) as usize;
+                        let draw_y = (center.1 as f32 + perdicular_unit_vector.1 * i as f32) as usize;
 
                         if !points[draw_x][draw_y].walkable {
                             wall_hit = true;
@@ -97,12 +97,12 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
 #[pyclass]
 #[derive(Clone)]
 pub struct Choke {
-    pub main_line: ((f64, f64), (f64, f64)),
+    pub main_line: ((f32, f32), (f32, f32)),
     pub lines: Vec<((usize, usize), (usize, usize))>,
     pub side1: Vec<(usize, usize)>,
     pub side2: Vec<(usize, usize)>,
     pub pixels: Vec<(usize, usize)>,
-    pub min_length: f64,
+    pub min_length: f32,
 }
 #[pymethods]
 impl Choke {
@@ -115,13 +115,13 @@ impl Choke {
     #[getter(side2)]
     fn get_side2(&self) -> Vec<(usize, usize)> { self.side2.clone() }
     #[getter(main_line)]
-    fn get_main_line(&self) -> ((f64, f64), (f64, f64)) { self.main_line.clone() }
+    fn get_main_line(&self) -> ((f32, f32), (f32, f32)) { self.main_line.clone() }
 
     #[getter(pixels)]
     fn get_pixels(&self) -> Vec<(usize, usize)> { self.pixels.clone() }
 
     #[getter(min_length)]
-    fn get_min_length(&self) -> f64 { self.min_length }
+    fn get_min_length(&self) -> f32 { self.min_length }
 }
 
 impl Choke {
@@ -134,7 +134,7 @@ impl Choke {
         side2.push(line.1);
         let pixels = Vec::<(usize, usize)>::new();
         // Real main line is created later on by calculating averages
-        let main_line = (((line.0).0 as f64, (line.0).1 as f64), ((line.1).0 as f64, (line.1).1 as f64));
+        let main_line = (((line.0).0 as f32, (line.0).1 as f32), ((line.1).0 as f32, (line.1).1 as f32));
         let min_length = distance(line.0, line.1);
         Choke { main_line,
                 lines,
@@ -160,8 +160,8 @@ impl Choke {
     }
 
     fn remove_excess_lines(&mut self) {
-        let mut distances = Vec::<f64>::new();
-        let mut min_distance = 999f64;
+        let mut distances = Vec::<f32>::new();
+        let mut min_distance = 999f32;
         for line in &self.lines {
             let d = distance(line.0, line.1);
             distances.push(d);
@@ -171,7 +171,7 @@ impl Choke {
         }
         let max = self.lines.len();
         for i in (0..max).rev() {
-            if distances[i] > min_distance + 2.5f64 {
+            if distances[i] > min_distance + 2.5f32 {
                 // Remove line
                 self.lines.remove(i);
             }
@@ -188,15 +188,15 @@ impl Choke {
             points[pos1.0][pos1.1].is_choke = true;
             points[pos2.0][pos2.1].is_choke = true;
 
-            let flight_distance = pos1.euclidean_distance(&pos2) as f64 / MULTF64;
+            let flight_distance = pos1.euclidean_distance(&pos2) as f32 / MULTF32;
 
             let dots = flight_distance as usize;
             let unit_vector =
-                ((pos2.0 as f64 - pos1.0 as f64) / flight_distance, (pos2.1 as f64 - pos1.1 as f64) / flight_distance);
+                ((pos2.0 as f32 - pos1.0 as f32) / flight_distance, (pos2.1 as f32 - pos1.1 as f32) / flight_distance);
 
             for i in 1..dots {
-                let draw_x = (pos1.0 as f64 + unit_vector.0 * i as f64) as usize;
-                let draw_y = (pos1.1 as f64 + unit_vector.1 * i as f64) as usize;
+                let draw_x = (pos1.0 as f32 + unit_vector.0 * i as f32) as usize;
+                let draw_y = (pos1.1 as f32 + unit_vector.1 * i as f32) as usize;
                 if (draw_x == pos1.0 && draw_y == pos1.1) || (draw_x == pos2.0 && draw_y == pos2.1) {
                     continue;
                 }
@@ -218,7 +218,7 @@ impl Choke {
             x_sum += point.0;
             y_sum += point.1;
         }
-        let point1 = (x_sum as f64 / self.side1.len() as f64, y_sum as f64 / self.side1.len() as f64);
+        let point1 = (x_sum as f32 / self.side1.len() as f32, y_sum as f32 / self.side1.len() as f32);
 
         x_sum = 0;
         y_sum = 0;
@@ -226,7 +226,7 @@ impl Choke {
             x_sum += point.0;
             y_sum += point.1;
         }
-        let point2 = (x_sum as f64 / self.side2.len() as f64, y_sum as f64 / self.side2.len() as f64);
+        let point2 = (x_sum as f32 / self.side2.len() as f32, y_sum as f32 / self.side2.len() as f32);
 
         self.main_line = (point1, point2);
     }
@@ -327,9 +327,9 @@ pub fn octile_distance(first: (usize, usize), second: (usize, usize)) -> usize {
 }
 
 #[inline]
-fn distance(first: (usize, usize), second: (usize, usize)) -> f64 {
+fn distance(first: (usize, usize), second: (usize, usize)) -> f32 {
     let pos1 = Pos(first.0, first.1);
     let pos2 = Pos(second.0, second.1);
 
-    return pos1.euclidean_distance(&pos2) as f64 / MULTF64;
+    return pos1.euclidean_distance(&pos2) as f32 / MULTF32;
 }
