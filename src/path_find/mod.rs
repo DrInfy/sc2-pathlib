@@ -305,6 +305,8 @@ impl PathFind {
         }
     }
 
+    pub fn current_influence(&self, position: (usize, usize)) -> usize { self.map[position.0][position.1] }
+
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
     pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f32) -> ((usize, usize), f32) {
         let corrected_center = self.get_closest_pathable(center);

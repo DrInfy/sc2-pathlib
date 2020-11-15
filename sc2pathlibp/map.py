@@ -31,6 +31,13 @@ class Sc2Map:
         )
 
     @property
+    def map(self) -> Map:
+        """
+        In case you need to call the rust object directly.
+        """
+        return self._map
+
+    @property
     def overlord_spots(self) -> List[Tuple[float, float]]:
         if self._overlord_spots is not None:
             return self._overlord_spots
@@ -101,6 +108,12 @@ class Sc2Map:
 
     def add_both_influence(self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float):
         self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
+
+    def current_influence(map_type: MapType, position: (float, float)):
+        """
+        Finds the current influence in the position
+        """
+        self._map.current_influence(map_type, position)
 
     def find_path(
         self, map_type: MapType, start: (float, float), end: (float, float), large: bool = False
@@ -175,6 +188,8 @@ class Sc2Map:
         image = np.array(self._map.draw_climbs(), dtype=np.uint8)
         image = np.multiply(image, 42)
         self.plot_image(image, image_name, resize)
+
+    
 
     def plot_ground_map(self, path: List[Tuple[int, int]], image_name: str = "ground_map", resize: int = 4):
         image = np.array(self._map.ground_pathing, dtype=np.uint8)
