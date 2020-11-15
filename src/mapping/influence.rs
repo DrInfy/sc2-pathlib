@@ -91,7 +91,7 @@ impl Map {
                                 min: f32,
                                 max: f32) {
         let mult = 1.0 / pos::MULTF32;
-        let mult2 = 1.0 / (max - min) ;
+        let mult2 = 1.0 / (max - min);
         let value = influence as usize;
         let mult_min = min * pos::MULTF32;
         let mult_max = max * pos::MULTF32;
@@ -130,7 +130,7 @@ impl Map {
                             let value_fading = (influence * (1.0 - (d * mult - min) * mult2)) as usize;
                             for mapping in maps.iter_mut() {
                                 let old_val = mapping.map[x][y];
-                                if old_val > 0 && value_fading > 0{
+                                if old_val > 0 && value_fading > 0 {
                                     mapping.map[x][y] = old_val + value_fading;
                                 }
                             }

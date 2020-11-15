@@ -246,7 +246,7 @@ impl PathFind {
             let rect = rectangle::Rectangle::init_from_center2(position, rect_size, self.width, self.height);
 
             for x in rect.x..rect.x_end {
-                for y in rect.y..rect.y_end {                        
+                for y in rect.y..rect.y_end {
                     if (octile_distance(position, (x, y)) as f32) < mult_distance {
                         self.map[x][y] += value;
                     }
@@ -673,7 +673,6 @@ impl PathFind {
                     best_target = (point_f32, distance_from_start);
                 }
             }
-
 
             if current_distance < distance + 4.0 {
                 let best_influence = self.map[(best_target.0).0 as usize][(best_target.0).1 as usize];

@@ -10,7 +10,6 @@ fn test_find_path_automaton_le() {
     assert_eq!(distance, 147.1656);
 }
 
-
 #[test]
 fn test_find_path_4x4() {
     let path_find = get_pathfind("tests/maze4x4.txt");

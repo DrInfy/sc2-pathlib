@@ -1,8 +1,7 @@
-use std::io::{BufReader, BufRead};
-use std::fs::File;
-use sc2pathlib::path_find;
 use sc2pathlib::mapping::map::Map;
-
+use sc2pathlib::path_find;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 fn rot90(vec: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     let len = vec[0].len();
@@ -19,7 +18,6 @@ fn rot90(vec: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     }
     new_arr
 }
-
 
 pub fn read_vec_from_file(file_path: &str) -> Vec<Vec<usize>> {
     let f = BufReader::new(File::open(file_path).unwrap());
