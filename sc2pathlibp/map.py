@@ -109,14 +109,14 @@ class Sc2Map:
     def add_both_influence(self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float):
         self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
 
-    def current_influence(map_type: MapType, position: (float, float)):
+    def current_influence(map_type: MapType, position: Tuple[float, float]):
         """
         Finds the current influence in the position
         """
         self._map.current_influence(map_type, position)
 
     def find_path(
-        self, map_type: MapType, start: (float, float), end: (float, float), large: bool = False
+        self, map_type: MapType, start: Tuple[float, float], end: Tuple[float, float], large: bool = False
     ) -> Tuple[List[Tuple[int, int]], float]:
         """
         Finds a path ignoring influence.
@@ -132,8 +132,8 @@ class Sc2Map:
         return self._map.find_path(map_type, start, end, self.heuristic_accuracy)
 
     def find_path_influence(
-        self, map_type: MapType, start: (float, float), end: (float, float), large: bool = False
-    ) -> (List[Tuple[int, int]], float):
+        self, map_type: MapType, start: Tuple[float, float], end: Tuple[float, float], large: bool = False
+    ) -> Tuple[List[Tuple[int, int]], float]:
         """
         Finds a path that takes influence into account
 
@@ -148,18 +148,18 @@ class Sc2Map:
         return self._map.find_path_influence(map_type, start, end, self.heuristic_accuracy)
 
     def safest_spot(
-        self, map_type: MapType, destination_center: (float, float), walk_distance: float
-    ) -> (Tuple[int, int], float):
+        self, map_type: MapType, destination_center: Tuple[float, float], walk_distance: float
+    ) -> Tuple[Tuple[int, int], float]:
         return self._map.lowest_influence_walk(map_type, destination_center, walk_distance)
 
     def lowest_influence_in_grid(
-        self, map_type: MapType, destination_center: (float, float), radius: int
-    ) -> (Tuple[int, int], float):
+        self, map_type: MapType, destination_center: Tuple[float, float], radius: int
+    ) -> Tuple[Tuple[int, int], float]:
         return self._map.lowest_influence(map_type, destination_center, radius)
 
     def find_low_inside_walk(
-        self, map_type: MapType, start: (float, float), target: (float, float), distance: Union[int, float]
-    ) -> (Tuple[float, float], float):
+        self, map_type: MapType, start: Tuple[float, float], target: Tuple[float, float], distance: Union[int, float]
+    ) -> Tuple[Tuple[int, int], float]:
         """
         Finds a compromise where low influence matches with close position to the start position.
 
@@ -232,6 +232,11 @@ class Sc2Map:
         """
 
         image = np.array(self._map.draw_chokes(), dtype=np.uint8)
+        # image = np.multiply(image, 42)
+        self.plot_image(image, image_name, resize)
+
+    def plot_zones(self, image_name: str = "map", resize: int = 4):
+        image = np.array(self._map.draw_zones(), dtype=np.uint8)
         # image = np.multiply(image, 42)
         self.plot_image(image, image_name, resize)
 

@@ -60,4 +60,22 @@ for choke in map.chokes:
     # choke.min_length
 print(arr)
 
+ns_pf = time.perf_counter_ns()
+
+map._map.calculate_zones([
+    (29, 65), (35, 34),
+    (63, 26), (56, 65),
+    (98, 26), (80, 66),
+    (33, 105), (129, 28),
+    (54, 151), (150, 74),
+    (103, 113), (85, 153),
+    (127, 114), (120, 153),
+    (148, 145), (154, 114)
+])
+
+ns_pf = time.perf_counter_ns() - ns_pf
+print(f"Solving map zones took {ns_pf / 1000 / 1000} ms.")
+
+map.plot_zones("zones")
+
 input("Press Enter to continue...")
