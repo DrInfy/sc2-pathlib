@@ -153,6 +153,14 @@ impl Map {
         return result;
     }
 
+    /// Returns current influence value
+    fn current_influence(&self, map_type: u8, position: (f32, f32)) -> usize {
+        let map = self.get_map(map_type);
+        let position_int = (position.0.round() as usize, position.1.round() as usize);
+
+        return map.current_influence(position_int);
+    }
+
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
     fn lowest_influence_walk(&self, map_type: u8, center: (f32, f32), distance: f32) -> ((usize, usize), f32) {
         let map = self.get_map(map_type);
@@ -401,6 +409,23 @@ impl Map {
         }
         if map_type == 3 {
             return &self.air_pathing;
+        }
+
+        panic!("Map type {} does not exist", map_type.to_string());
+    }
+
+    pub fn get_map_mut(&mut self, map_type: u8) -> &mut PathFind {
+        if map_type == 0 {
+            return &mut self.ground_pathing;
+        }
+        if map_type == 1 {
+            return &mut self.reaper_pathing;
+        }
+        if map_type == 2 {
+            return &mut self.colossus_pathing;
+        }
+        if map_type == 3 {
+            return &mut self.air_pathing;
         }
 
         panic!("Map type {} does not exist", map_type.to_string());

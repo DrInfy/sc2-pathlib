@@ -194,9 +194,9 @@ impl Choke {
             let unit_vector =
                 ((pos2.0 as f32 - pos1.0 as f32) / flight_distance, (pos2.1 as f32 - pos1.1 as f32) / flight_distance);
 
-            for i in 1..dots {
-                let draw_x = (pos1.0 as f32 + unit_vector.0 * i as f32) as usize;
-                let draw_y = (pos1.1 as f32 + unit_vector.1 * i as f32) as usize;
+            for i in 1..(dots * 2) {
+                let draw_x = (pos1.0 as f32 + unit_vector.0 * (i as f32 * 0.5f32)) as usize;
+                let draw_y = (pos1.1 as f32 + unit_vector.1 * (i as f32 * 0.5f32)) as usize;
                 if (draw_x == pos1.0 && draw_y == pos1.1) || (draw_x == pos2.0 && draw_y == pos2.1) {
                     continue;
                 }
