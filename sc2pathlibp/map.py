@@ -51,8 +51,24 @@ class Sc2Map:
         self._chokes = self._map.chokes
         return self._chokes
 
+
     def reset(self):
         self._map.reset()
+
+    def calculate_zones(self, sorted_base_locations: List[Tuple[float, float]]):
+        """
+        Use this on initialization to calculate zones.
+        Zones start from 1 onwards.
+        Zone 0 is empty zone.
+        """
+        self._map.calculate_zones(sorted_base_locations)
+
+    def get_zone(self, position: Tuple[float, float]) -> int:
+        """
+        Zones start from 1 onwards.
+        Zone 0 is empty zone.
+        """
+        return self._map.get_zone(position)
 
     def normalize_influence(self, value: int):
         self._map.normalize_influence(value)
@@ -109,11 +125,21 @@ class Sc2Map:
     def add_both_influence(self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float):
         self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
 
-    def current_influence(map_type: MapType, position: Tuple[float, float]):
+    def current_influence(self, map_type: MapType, position: Tuple[float, float]):
         """
         Finds the current influence in the position
         """
         self._map.current_influence(map_type, position)
+
+    def add_influence_without_zones(self, zones: List[int], value: float):
+        """
+        Add specified amount of influence to areas that not within specified zones.
+        This can be useful in making sure units do not follow enemies outside main.
+        Zones start from 1 onwards.
+        Zone 0 is empty zone.
+        """
+        self._map.add_influence_without_zones(zones, int(value))
+    
 
     def find_path(
         self, map_type: MapType, start: Tuple[float, float], end: Tuple[float, float], large: bool = False

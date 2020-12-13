@@ -169,7 +169,7 @@ impl Map {
         return maps;
     }
 
-    fn get_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
+    pub fn get_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
         let mut maps = Vec::<&mut PathFind>::new();
         maps.push(&mut self.ground_pathing);
 
@@ -183,7 +183,7 @@ impl Map {
         return maps;
     }
 
-    fn get_air_influence_maps(&mut self) -> Vec<&mut PathFind> {
+    pub fn get_air_influence_maps(&mut self) -> Vec<&mut PathFind> {
         let mut maps = Vec::<&mut PathFind>::new();
         maps.push(&mut self.air_pathing);
 

@@ -1,7 +1,10 @@
 use pyo3::prelude::*;
 use std::collections::HashSet;
 
-use crate::path_find::euclidean_distance;
+use crate::{
+    helpers::round_point2,
+    path_find::{euclidean_distance, pos},
+};
 
 use super::{map::Map, map_point::MapPoint};
 
@@ -45,12 +48,43 @@ impl Map {
         }
 
         walk_map
-        
+    }
+
+    pub fn add_influence_without_zones(&mut self, influence_zones: Vec<i8>, value: usize) {
+        let width = self.ground_pathing.map.len();
+        let height = self.ground_pathing.map[0].len();
+        // let mut maps =self.get_ground_influence_maps();
+        for x in 0..width {
+            for y in 0..height {
+                let index = self.zone_index(x, y);
+                let mut found = false;
+                for influence_index in &influence_zones {
+                    if index == *influence_index {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if !found {
+                    for mapping in self.get_ground_influence_maps() {
+                        // for mapping in maps.iter_mut() {
+                        mapping.map[x][y] += value;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn get_zone(&self, position: (f32, f32)) -> i8 {
+        let u_position = round_point2(position);
+        let index = self.points[u_position.0][u_position.1].zone_index;
+        index
     }
 }
 
 impl Map {
     fn borrow(&mut self, x: usize, y: usize) -> &mut MapPoint { return &mut self.points[x][y]; }
+    fn zone_index(&mut self, x: usize, y: usize) -> i8 { return self.points[x][y].zone_index; }
 }
 
 fn flood_fill(map: &mut Map,
@@ -60,12 +94,10 @@ fn flood_fill(map: &mut Map,
               zone_index: i8,
               origin: (f32, f32),
               sorted_base_locations: &Vec<(f32, f32)>) {
-
     let zone = map.borrow(x, y).zone_index as usize;
     if zone == zone_index as usize || !map.borrow(x, y).walkable {
         return;
-    }
-    else if zone > 0 {
+    } else if zone > 0 {
         let start = (x, y);
         let pos = sorted_base_locations[zone - 1];
         let end = (pos.0 as usize, pos.1 as usize);
@@ -84,13 +116,12 @@ fn flood_fill(map: &mut Map,
 
     let mut point = map.borrow(x, y);
 
-    
     point.zone_index = zone_index;
-    
+
     if target_height > point.height + DIFFERENCE || target_height < point.height - DIFFERENCE {
         return; // Not the same zone anymore.
     }
-    
+
     if point.is_choke {
         // Let's color the first grid as being the same zone
         return; // do not flood fill any of the following grid pixels.

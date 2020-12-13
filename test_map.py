@@ -60,8 +60,8 @@ for choke in map.chokes:
     # choke.min_length
 print(arr)
 
-ns_pf = time.perf_counter_ns()
 
+ns_pf = time.perf_counter_ns()
 map._map.calculate_zones([
     (29, 65), (35, 34),
     (63, 26), (56, 65),
@@ -75,6 +75,13 @@ map._map.calculate_zones([
 
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"Solving map zones took {ns_pf / 1000 / 1000} ms.")
+
+ns_pf = time.perf_counter_ns()
+
+map.add_influence_without_zones([1, 2], 1000)
+
+ns_pf = time.perf_counter_ns() - ns_pf
+print(f"Adding map influence took {ns_pf / 1000 / 1000} ms.")
 
 map.plot_zones("zones")
 

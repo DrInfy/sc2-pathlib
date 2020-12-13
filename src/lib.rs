@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use pyo3::prelude::*;
+pub mod helpers;
 pub mod mapping;
 pub mod path_find;
 
