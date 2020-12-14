@@ -1,4 +1,4 @@
-use crate::path_find::PathFind;
+use crate::{helpers::round_point2, path_find::PathFind};
 use pyo3::prelude::*;
 
 // extern crate test;
@@ -154,17 +154,17 @@ impl Map {
     }
 
     /// Returns current influence value
-    fn current_influence(&self, map_type: u8, position: (f32, f32)) -> usize {
+    fn current_influence(&self, map_type: u8, position: (f32, f32)) -> f32 {
         let map = self.get_map(map_type);
-        let position_int = (position.0.round() as usize, position.1.round() as usize);
+        let position_int = round_point2(position);
 
-        return map.current_influence(position_int);
+        return map.current_influence(position_int) as f32;
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
     fn lowest_influence_walk(&self, map_type: u8, center: (f32, f32), distance: f32) -> ((usize, usize), f32) {
         let map = self.get_map(map_type);
-        let center_int = (center.0.round() as usize, center.1.round() as usize);
+        let center_int = round_point2(center);
 
         return map.lowest_influence_walk(center_int, distance);
     }
