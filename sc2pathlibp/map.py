@@ -69,6 +69,20 @@ class Sc2Map:
         Zone 0 is empty zone.
         """
         return self._map.get_zone(position)
+    
+    def calculate_connections(self, start: Tuple[float, float]):
+        """
+        Calculates ground connections to a single point in the map.
+        Use `is_connected` the check if a location is connected.
+        """
+        self._map.calculate_connections(start)
+
+    def is_connected(self, start: Tuple[float, float]) -> bool:
+        """
+        Check if a point is connected to earlier start position used in `calculate_connections`
+        If `calculate_connections` was not run, returns False.
+        """
+        return self._map.is_connected(start)
 
     def normalize_influence(self, value: int):
         self._map.normalize_influence(value)
@@ -129,7 +143,7 @@ class Sc2Map:
         """
         Finds the current influence in the position
         """
-        self._map.current_influence(map_type, position)
+        return self._map.current_influence(map_type, position)
 
     def add_influence_without_zones(self, zones: List[int], value: float):
         """

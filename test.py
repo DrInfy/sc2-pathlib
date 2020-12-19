@@ -68,7 +68,7 @@ total_distance = 0
 count = 0
 ns_pf = time.perf_counter_ns()
 pf.normalize_influence(100)
-pf.heuristic_accuracy = 2
+pf.heuristic_accuracy = 1
 
 for pos1 in expansions:
     for pos2 in expansions:

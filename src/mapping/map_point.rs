@@ -17,6 +17,7 @@ pub struct MapPoint {
     pub pathable: bool,
     pub walkable: bool,
     pub climbable: bool,
+    pub connected: bool,
     pub structure_index: i32,
     pub height: usize,
     pub overlord_spot: bool,
@@ -31,6 +32,7 @@ impl MapPoint {
         let pathable = false;
         let walkable = false;
         let climbable = false;
+        let connected = false;
         let structure_index = 0_i32;
         let height = 0;
         let overlord_spot = false;
@@ -42,6 +44,7 @@ impl MapPoint {
                    pathable,
                    walkable,
                    climbable,
+                   connected,
                    structure_index,
                    height,
                    overlord_spot,
