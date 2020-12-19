@@ -37,6 +37,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(Pos, usize)> {
         let &Pos(x, y) = self;
         let mut arr = Vec::<(Pos, usize)>::with_capacity(8);
@@ -143,7 +144,8 @@ impl InfluencedPos {
             (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * normal_influence
         }
     }
-
+    
+    #[inline]
     pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(InfluencedPos, usize)> {
         let &InfluencedPos(x, y) = self;
         let mut arr = Vec::<(InfluencedPos, usize)>::with_capacity(8);

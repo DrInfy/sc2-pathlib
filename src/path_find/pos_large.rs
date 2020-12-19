@@ -38,7 +38,8 @@ impl PosLarge {
             MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
         }
     }
-
+    
+    #[inline]
     pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(PosLarge, usize)> {
         let &PosLarge(x, y) = self;
         let mut arr = Vec::<(PosLarge, usize)>::with_capacity(8);
@@ -159,6 +160,7 @@ impl InfluencedPosLarge {
         }
     }
 
+    #[inline]
     pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(InfluencedPosLarge, usize)> {
         let &InfluencedPosLarge(x, y) = self;
         let mut arr = Vec::<(InfluencedPosLarge, usize)>::with_capacity(8);
