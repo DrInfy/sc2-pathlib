@@ -12,7 +12,7 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                     chokes: &mut Vec<((usize, usize), (usize, usize))>,
                     x: usize,
                     y: usize,
-                    x_start: usize,
+                    _x_start: usize,
                     y_start: usize,
                     x_end: usize,
                     y_end: usize) {
@@ -154,7 +154,7 @@ impl Choke {
         }
     }
 
-    fn finalize(&mut self, points: &mut Vec<Vec<map_point::MapPoint>>) {
+    fn finalize(&mut self, _points: &mut Vec<Vec<map_point::MapPoint>>) {
         self.remove_excess_lines();
         self.calc_final_line();
     }

@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [nightly]
         python-version: [3.6, 3.7, 3.8]
 
@@ -79,10 +79,15 @@ jobs:
         python ./rename_output.py ${{ matrix.python-version }}
       if: matrix.os == 'windows-latest'
 
+    - name: Create archive for Mac OS
+      run: |
+        mv ./target/release/libsc2pathlib.dylib ./artifacts/sc2pathlib-macos.so
+      if: matrix.os == 'macos-latest'
+
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v1
       name: Upload archive
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
         path: artifacts/
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest' || matrix.os == 'macos-latest'

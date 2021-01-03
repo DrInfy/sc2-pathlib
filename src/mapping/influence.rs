@@ -1,12 +1,8 @@
-use crate::path_find::pos::Pos;
-use crate::path_find::pos::{self, MULTF32};
+use crate::path_find::pos;
 use crate::path_find::{octile_distance, rectangle, PathFind};
 use pyo3::prelude::*;
 
 // extern crate test;
-use std::collections::HashSet;
-
-use super::chokes::{group_chokes, Choke};
 
 const DIFFERENCE: usize = 16;
 const Y_MULT: usize = 1000000;

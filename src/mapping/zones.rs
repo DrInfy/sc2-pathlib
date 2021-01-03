@@ -1,9 +1,8 @@
 use pyo3::prelude::*;
-use std::collections::HashSet;
 
 use crate::{
     helpers::round_point2,
-    path_find::{euclidean_distance, pos},
+    path_find::{euclidean_distance},
 };
 
 use super::{map::Map, map_point::MapPoint};
