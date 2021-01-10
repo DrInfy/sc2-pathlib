@@ -84,6 +84,13 @@ class Sc2Map:
         """
         return self._map.is_connected(start)
 
+    def remove_connection(self, start: Tuple[float, float]) -> bool:
+        """
+        Remove a 'connection' from location. This can be used to disable warp-ins in certain areas.
+        """
+        return self._map.remove_connection(start)
+    
+
     def normalize_influence(self, value: int):
         self._map.normalize_influence(value)
 

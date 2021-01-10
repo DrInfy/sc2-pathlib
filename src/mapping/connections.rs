@@ -36,5 +36,10 @@ impl Map {
     pub fn is_connected(&mut self, location: (f32, f32)) -> bool {
         let location_int = round_point2(location);
         return self.points[location_int.0][location_int.1].connected;
-    } 
+    }
+
+    pub fn remove_connection(&mut self, location: (f32, f32)) {
+        let location_int = round_point2(location);
+        self.points[location_int.0][location_int.1].connected = false;
+    }
 }
