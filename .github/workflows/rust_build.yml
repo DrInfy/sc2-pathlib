@@ -119,7 +119,7 @@ jobs:
 
       # Run benchmark with `go test -bench` and stores the output to a file
       - name: Run benchmark
-        run: cargo bench --no-default-features | tee output.txt
+        run: cargo bench --bench path_benchmark --no-default-features -- --output-format bencher | tee output.txt
 
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
@@ -130,7 +130,7 @@ jobs:
 
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: rhysd/github-action-benchmark@v1
+        uses: rhysd/github-action-benchmark@master
         with:
           
           name: Rust Benchmark
