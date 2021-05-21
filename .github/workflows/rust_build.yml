@@ -130,7 +130,7 @@ jobs:
 
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: rhysd/github-action-benchmark@master
+        uses: rhysd/github-action-benchmark@v1
         with:
           
           name: Rust Benchmark
