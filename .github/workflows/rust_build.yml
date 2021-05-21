@@ -51,7 +51,7 @@ jobs:
         cargo clippy
 
     - name: Test
-      run: cargo test --verbose --release --no-default-features
+      run: cargo test --verbose --no-default-features
 
     - name: Build
       run: cargo build --verbose --release
@@ -132,9 +132,11 @@ jobs:
       - name: Store benchmark result
         uses: rhysd/github-action-benchmark@v1
         with:
+          
           name: Rust Benchmark
           # What benchmark tool the output.txt came from
           tool: 'cargo'
+          github-token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
           # Where the output from the benchmark tool is stored
           output-file-path: output.txt
           # Where the previous data file is stored
