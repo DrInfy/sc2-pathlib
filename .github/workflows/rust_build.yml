@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        rust: [nightly]
+        rust: [stable]
         python-version: [3.6, 3.7, 3.8]
 
     steps:
@@ -34,10 +34,10 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Install latest nightly
+    - name: Install latest stable
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly-2020-04-06
+        toolchain: stable
         override: true
 
     - name: Run cargo check
