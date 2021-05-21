@@ -29,4 +29,5 @@ harness = false
 # codegen-units = 1
 
 [features]
+extension-module = ["pyo3/extension-module"]
 default = ["extension-module"]
