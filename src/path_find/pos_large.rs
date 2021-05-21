@@ -1,5 +1,5 @@
 use pathfinding::prelude::absdiff;
-
+use arrayvec::ArrayVec;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
@@ -40,9 +40,9 @@ impl PosLarge {
     }
     
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(PosLarge, usize)> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(PosLarge, usize), 8> {
         let &PosLarge(x, y) = self;
-        let mut arr = Vec::<(PosLarge, usize)>::with_capacity(8);
+        let mut arr = ArrayVec::<(PosLarge, usize), 8>::new();
         //let arr = Vec<(PosLarge, f32)>();
 
         let mut val_left: bool = false;
@@ -161,9 +161,9 @@ impl InfluencedPosLarge {
     }
 
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> Vec<(InfluencedPosLarge, usize)> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InfluencedPosLarge, usize), 8> {
         let &InfluencedPosLarge(x, y) = self;
-        let mut arr = Vec::<(InfluencedPosLarge, usize)>::with_capacity(8);
+        let mut arr = ArrayVec::<(InfluencedPosLarge, usize), 8>::new();
 
         let mut val_left: usize = 0;
         let mut val_down: usize = 0;
