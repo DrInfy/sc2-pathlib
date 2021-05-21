@@ -19,17 +19,17 @@ jobs:
 
     # Cache
     - name: Cache cargo registry
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ~/.cargo/registry
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
     - name: Cache cargo index
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ~/.cargo/git
         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
     - name: Cache cargo build
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
@@ -51,12 +51,7 @@ jobs:
         cargo clippy
 
     - name: Test
-      run: cargo test --verbose --release
-      if: matrix.os == 'windows-latest'
-
-    - name: Bench
-      run: cargo bench
-      if: matrix.os == 'windows-latest'
+      run: cargo test --verbose --no-default-features
 
     - name: Build
       run: cargo build --verbose --release
@@ -91,3 +86,62 @@ jobs:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
         path: artifacts/
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+
+  benchmark:
+    name: Performance regression check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        # Cache
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      # Run benchmark with `go test -bench` and stores the output to a file
+      - name: Run benchmark
+        run: cargo bench --bench path_benchmark --no-default-features -- --output-format bencher | tee output.txt
+
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v2
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          
+          name: Rust Benchmark
+          # What benchmark tool the output.txt came from
+          tool: 'cargo'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Where the output from the benchmark tool is stored
+          output-file-path: output.txt
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
+          comment-always: true
+      # Upload the updated cache file for the next job by actions/cache

@@ -4,19 +4,19 @@ version = "0.3.1"
 edition = "2018"
 
 [lib]
+bench = false
 name = "sc2pathlib"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies.pyo3]
-version = "0.11.0"
-features = ["extension-module"]
+version = "0.13.2"
 
 [dependencies]
 pathfinding = "2.0.4"
 arrayvec = "0.7.0"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.3.4"
 
 
 [[bench]]
@@ -28,3 +28,7 @@ harness = false
 # panic="abort"
 # lto = "fat"
 # codegen-units = 1
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
