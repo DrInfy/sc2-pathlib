@@ -136,7 +136,7 @@ jobs:
           name: Rust Benchmark
           # What benchmark tool the output.txt came from
           tool: 'cargo'
-          github-token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           # Where the output from the benchmark tool is stored
           output-file-path: output.txt
           # Where the previous data file is stored
