@@ -548,7 +548,8 @@ impl PathFind {
         (path, distance)
     }
 
-    /// Find the shortest path values without considering influence and returns the path and distance
+    /// Find the shortest path values without considering influence and returns the path and distance. Short circuits when
+    /// a position is closer than `distance_from_target`
     pub fn find_path_closer_than(&self,
                                  start: (usize, usize),
                                  end: (usize, usize),
@@ -604,7 +605,8 @@ impl PathFind {
         (path, distance)
     }
 
-    /// Find the shortest path values without considering influence and returns the path and distance
+    /// Find the shortest path values without considering influence and returns the path and distance. Short circuits when
+    /// a position is closer than `distance_from_target`
     pub fn find_path_large_closer_than(&self,
                                        start: (usize, usize),
                                        end: (usize, usize),
@@ -661,7 +663,8 @@ impl PathFind {
         (path, distance)
     }
 
-    /// Find the path using influence values and returns the path and distance
+    /// Find the path using influence values and returns the path and distance. Short circuits when
+    /// a position is closer than `distance_from_target`
     pub fn find_path_influence_closer_than(&self,
                                            start: (usize, usize),
                                            end: (usize, usize),
@@ -732,7 +735,8 @@ impl PathFind {
         (path, distance)
     }
 
-    /// Find the path using influence values and returns the path and distance
+    /// Find the path using influence values and returns the path and distance. Short circuits when
+    /// a position is closer than `distance_from_target`
     pub fn find_path_influence_large_closer_than(&self,
                                                  start: (usize, usize),
                                                  end: (usize, usize),
