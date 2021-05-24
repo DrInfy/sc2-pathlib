@@ -1,9 +1,6 @@
 use pyo3::prelude::*;
 
-use crate::{
-    helpers::round_point2,
-    path_find::{euclidean_distance},
-};
+use crate::{helpers::round_point2, path_find::euclidean_distance};
 
 use super::{map::Map, map_point::MapPoint};
 
