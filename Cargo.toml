@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 version = "0.13.2"
 
 [dependencies]
-pathfinding = "2.0.4"
+pathfinding = {git="https://github.com/danielvschoor/pathfinding", branch="main"}
 arrayvec = "0.7.0"
 
 [dev-dependencies]

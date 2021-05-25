@@ -218,9 +218,18 @@ checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
 
 [[package]]
 name = "fixedbitset"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
+checksum = "398ea4fabe40b9b0d885340a2a991a44c8a645624075ad966d21f88688e2b69e"
+
+[[package]]
+name = "fxhash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
+dependencies = [
+ "byteorder",
+]
 
 [[package]]
 name = "ghost"
@@ -306,15 +315,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "itertools"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f56a2d0bc861f9165be4eb3442afd3c236d8a98afd426f65d92324ae1091a484"
-dependencies = [
- "either",
 ]
 
 [[package]]
@@ -473,13 +473,13 @@ dependencies = [
 
 [[package]]
 name = "pathfinding"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86f4d8cc85ca67860ef4324faf86973a39e4e1c78338987eda29a8e6b6ec0c0e"
+version = "2.1.5-pre"
+source = "git+https://github.com/danielvschoor/pathfinding?branch=main#53afc558c110c327a16597e1fabf717e21182772"
 dependencies = [
  "fixedbitset",
+ "fxhash",
  "indexmap",
- "itertools 0.8.2",
+ "itertools 0.9.0",
  "num-traits",
 ]
 
