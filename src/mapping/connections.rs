@@ -1,10 +1,8 @@
 use pyo3::prelude::*;
 
-use crate::{
-    helpers::round_point2,
-};
+use crate::helpers::round_point2;
 
-use super::{map::Map};
+use super::map::Map;
 
 const DIFFERENCE: usize = 12;
 const Y_MULT: usize = 1000000;
@@ -13,9 +11,9 @@ const Y_MULT: usize = 1000000;
 impl Map {
     pub fn calculate_connections(&mut self, location: (f32, f32)) {
         let pf = self.get_map_mut(0);
-        
+
         let result = pf.djiktra(location, 400f32);
-        
+
         let width = self.ground_pathing.map.len();
         let height = self.ground_pathing.map[0].len();
 
