@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 version = "0.13.2"
 
 [dependencies]
-pathfinding = "2.0.4"
+pathfinding = "2.1.5"
 arrayvec = "0.7.0"
 
 [dev-dependencies]
@@ -22,9 +22,10 @@ criterion = "0.3.4"
 [[bench]]
 name = "path_benchmark"
 harness = false
-# [profile.release]
-# opt-level = 3
-# debug=false
+
+ [profile.release]
+ opt-level = 3
+ debug=true
 # panic="abort"
 # lto = "fat"
 # codegen-units = 1
