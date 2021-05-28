@@ -311,7 +311,7 @@ impl PathFind {
     pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f32) -> ((usize, usize), f32) {
         let corrected_center = self.get_closest_pathable(center);
 
-        return self.lowest_influence_walk_inline(corrected_center, distance);
+        self.lowest_influence_walk_inline(corrected_center, distance)
     }
 
     #[inline]
