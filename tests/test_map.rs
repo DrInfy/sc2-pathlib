@@ -13,16 +13,14 @@ fn test_find_path_map() {
     assert_eq!(distance, 6.0);
 }
 
-// Test not working, ignored for now.
-// #[test]
+#[test]
 fn test_find_map_borders() {
     let map = get_choke_map();
     let r = map.get_borders();
-    assert_eq!(r.len(), 20 + 16);
+    assert_eq!(r.len(), 76);
 }
 
-// Test not working, ignored for now.
-// #[test]
+#[test]
 fn test_find_map_chokes() {
     let map = get_choke_map();
     let r = map.get_chokes();
