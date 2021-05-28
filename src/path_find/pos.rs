@@ -1,5 +1,5 @@
-use pathfinding::prelude::absdiff;
 use arrayvec::ArrayVec;
+use pathfinding::prelude::absdiff;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
@@ -38,9 +38,9 @@ impl Pos {
     }
 
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(Pos, usize),8> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = self;
-        let mut arr = ArrayVec::<(Pos, usize),8>::new();
+        let mut arr = ArrayVec::<(Pos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
 
         let mut val_left: bool = false;
@@ -144,11 +144,11 @@ impl InfluencedPos {
             (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * normal_influence
         }
     }
-    
+
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InfluencedPos, usize),8> {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InfluencedPos, usize), 8> {
         let &InfluencedPos(x, y) = self;
-        let mut arr = ArrayVec::<(InfluencedPos, usize),8>::new();
+        let mut arr = ArrayVec::<(InfluencedPos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
 
         let mut val_left: usize = 0;
@@ -253,9 +253,9 @@ impl InvertPos {
         }
     }
 
-    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InvertPos, usize),8>  {
+    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InvertPos, usize), 8> {
         let &InvertPos(x, y) = self;
-        let mut arr =  ArrayVec::<(InvertPos, usize),8>::new();
+        let mut arr = ArrayVec::<(InvertPos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
 
         let mut val_left: bool = false;

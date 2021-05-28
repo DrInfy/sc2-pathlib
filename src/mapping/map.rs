@@ -229,6 +229,64 @@ impl Map {
         return map.find_path_influence_large(start_int, end_int, possible_heuristic);
     }
 
+    /// Find the shortest path values without considering influence and returns the path and distance
+    pub fn find_path_closer_than(&self,
+                                 map_type: u8,
+                                 start: (f32, f32),
+                                 end: (f32, f32),
+                                 possible_heuristic: Option<u8>,
+                                 distance_from_target: f32)
+                                 -> (Vec<(usize, usize)>, f32) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+
+        let map = self.get_map(map_type);
+        return map.find_path_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+    }
+
+    /// Find the shortest path values without considering influence and returns the path and distance
+    pub fn find_path_large_closer_than(&self,
+                                       map_type: u8,
+                                       start: (f32, f32),
+                                       end: (f32, f32),
+                                       possible_heuristic: Option<u8>,
+                                       distance_from_target: f32)
+                                       -> (Vec<(usize, usize)>, f32) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+
+        let map = self.get_map(map_type);
+        return map.find_path_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    pub fn find_path_influence_closer_than(&self,
+                                           map_type: u8,
+                                           start: (f32, f32),
+                                           end: (f32, f32),
+                                           possible_heuristic: Option<u8>,
+                                           distance_from_target: f32)
+                                           -> (Vec<(usize, usize)>, f32) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+        let map = self.get_map(map_type);
+        return map.find_path_influence_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+    }
+
+    /// Find the path using influence values and returns the path and distance
+    pub fn find_path_influence_large_closer_than(&self,
+                                                 map_type: u8,
+                                                 start: (f32, f32),
+                                                 end: (f32, f32),
+                                                 possible_heuristic: Option<u8>,
+                                                 distance_from_target: f32)
+                                                 -> (Vec<(usize, usize)>, f32) {
+        let start_int = (start.0.round() as usize, start.1.round() as usize);
+        let end_int = (end.0.round() as usize, end.1.round() as usize);
+        let map = self.get_map(map_type);
+        return map.find_path_influence_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+    }
+
     /// Finds a compromise where low influence matches with close position to the start position.
     fn find_low_inside_walk(&self,
                             map_type: u8,

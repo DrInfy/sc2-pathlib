@@ -1,5 +1,5 @@
-use pathfinding::prelude::absdiff;
 use arrayvec::ArrayVec;
+use pathfinding::prelude::absdiff;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
@@ -38,7 +38,7 @@ impl PosLarge {
             MULT * dy + DIAGONAL_MINUS_CARDINAL * dx
         }
     }
-    
+
     #[inline]
     pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(PosLarge, usize), 8> {
         let &PosLarge(x, y) = self;
