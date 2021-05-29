@@ -1,5 +1,3 @@
-use std::f32::MAX;
-
 use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
@@ -911,8 +909,8 @@ impl PathFind {
             if distance_from_target > distance {
                 continue;
             }
-            
-            let distance_from_start= octile_distance_f32(corrected_start, destination.0);
+
+            let distance_from_start = octile_distance_f32(corrected_start, destination.0);
             // Use magic distance constant here to not move without reason.
             // Let's take the distance into account so that same influence value is better when it's closer.
             let distance_value = distance_from_start;
@@ -924,7 +922,7 @@ impl PathFind {
             }
         }
 
-        return best_target;
+        best_target
     }
 
     pub fn invert_djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
@@ -946,7 +944,7 @@ impl PathFind {
             destination_collection.push(((x, y), d));
         }
 
-        return destination_collection;
+        destination_collection
     }
 
     pub fn djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
@@ -968,6 +966,6 @@ impl PathFind {
             destination_collection.push(((x, y), d));
         }
 
-        return destination_collection;
+        destination_collection
     }
 }

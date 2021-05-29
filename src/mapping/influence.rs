@@ -151,7 +151,7 @@ impl Map {
             maps.push(&mut self.reaper_pathing);
         }
 
-        return maps;
+        maps
     }
 
     fn get_pure_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
@@ -162,7 +162,7 @@ impl Map {
             maps.push(&mut self.reaper_pathing);
         }
 
-        return maps;
+        maps
     }
 
     pub fn get_ground_influence_maps(&mut self) -> Vec<&mut PathFind> {
@@ -176,7 +176,7 @@ impl Map {
             maps.push(&mut self.reaper_pathing);
         }
 
-        return maps;
+        maps
     }
 
     pub fn get_air_influence_maps(&mut self) -> Vec<&mut PathFind> {
@@ -187,6 +187,6 @@ impl Map {
             maps.push(&mut self.colossus_pathing);
         }
 
-        return maps;
+        maps
     }
 }
