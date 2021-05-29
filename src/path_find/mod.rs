@@ -893,15 +893,12 @@ impl PathFind {
             let path =
                 self.find_path_influence_inline_closer_than(corrected_start, corrected_target, Some(1u8), distance);
             if path.1 >= 0f32 {
-                // dbg!(path);
-                // dbg!(path.0);
-                // dbg!(path.1);
-                return (point2_f32(*path.0.last().unwrap()), path.1);
+                return (point2_f32(*path.0.last().unwrap_or(&corrected_start)), path.1);
             }
             return ((0.0, 0.0), -1.0); // Failed
         }
 
-        let destinations = self.find_destinations_in_inline(corrected_target, distance);
+        let destinations = self.find_destinations_in_inline(corrected_start, distance + 1.0);
 
         let mut best_target: ((f32, f32), f32) = (point2_f32(corrected_start), 0.0);
         let mut best_influence = f32::MAX;
@@ -918,7 +915,7 @@ impl PathFind {
             let distance_from_start= octile_distance_f32(corrected_start, destination.0);
             // Use magic distance constant here to not move without reason.
             // Let's take the distance into account so that same influence value is better when it's closer.
-            let distance_value = distance_from_start * self.normal_influence as f32 * 0.25;
+            let distance_value = distance_from_start;
             let influence = self.map[(destination.0).0][(destination.0).1] as f32 + distance_value;
 
             if influence < best_influence {
