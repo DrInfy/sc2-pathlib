@@ -331,5 +331,5 @@ fn distance(first: (usize, usize), second: (usize, usize)) -> f32 {
     let pos1 = Pos(first.0, first.1);
     let pos2 = Pos(second.0, second.1);
 
-    return pos1.euclidean_distance(&pos2) as f32 / MULTF32;
+    pos1.euclidean_distance(&pos2) as f32 / MULTF32
 }

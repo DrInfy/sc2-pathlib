@@ -41,85 +41,75 @@ impl FreeFinder {
 /// __87678__
 /// ___A9A___
 fn create_search_grid() -> Vec<(i64, i64)> {
-    let mut search_grid: Vec<(i64, i64)> = Vec::<(i64, i64)>::new();
-    // 0, Not checked
-    //search_grid.push((0, 0));
+    let search_grid: Vec<(i64, i64)> = vec![// 0, Not checked
+                                            //(0, 0),
 
-    // 1
-    search_grid.push((-1, 0));
-    search_grid.push((1, 0));
-    search_grid.push((0, -1));
-    search_grid.push((0, 1));
-
-    // 2
-    search_grid.push((1, 1));
-    search_grid.push((-1, -1));
-    search_grid.push((1, -1));
-    search_grid.push((-1, 1));
-
-    // 3
-    search_grid.push((-2, 0));
-    search_grid.push((2, 0));
-    search_grid.push((0, -2));
-    search_grid.push((0, 2));
-
-    // 4
-    search_grid.push((-2, 1));
-    search_grid.push((2, -1));
-    search_grid.push((-1, -2));
-    search_grid.push((1, 2));
-    search_grid.push((-2, -1));
-    search_grid.push((2, 1));
-    search_grid.push((1, -2));
-    search_grid.push((-1, 2));
-
-    // 5
-    search_grid.push((2, 2));
-    search_grid.push((-2, -2));
-    search_grid.push((2, -2));
-    search_grid.push((-2, 2));
-
-    // 6
-    search_grid.push((-3, 0));
-    search_grid.push((3, 0));
-    search_grid.push((0, -3));
-    search_grid.push((0, 3));
-
-    // 7
-    search_grid.push((-3, 1));
-    search_grid.push((3, -1));
-    search_grid.push((-1, -3));
-    search_grid.push((1, 3));
-    search_grid.push((-3, -1));
-    search_grid.push((3, 1));
-    search_grid.push((1, -3));
-    search_grid.push((-1, 3));
-
-    // 8
-    search_grid.push((-3, 2));
-    search_grid.push((3, -2));
-    search_grid.push((-2, -3));
-    search_grid.push((2, 3));
-    search_grid.push((-3, -2));
-    search_grid.push((3, 2));
-    search_grid.push((2, -3));
-    search_grid.push((-2, 3));
-
-    // 9
-    search_grid.push((-4, 0));
-    search_grid.push((4, 0));
-    search_grid.push((0, -4));
-    search_grid.push((0, 4));
-
-    // A
-    search_grid.push((-4, 1));
-    search_grid.push((4, -1));
-    search_grid.push((-1, -4));
-    search_grid.push((1, 4));
-    search_grid.push((-4, -1));
-    search_grid.push((4, 1));
-    search_grid.push((1, -4));
-    search_grid.push((-1, 4));
+                                            // 1
+                                            (-1, 0),
+                                            (1, 0),
+                                            (0, -1),
+                                            (0, 1),
+                                            // 2
+                                            (1, 1),
+                                            (-1, -1),
+                                            (1, -1),
+                                            (-1, 1),
+                                            // 3
+                                            (-2, 0),
+                                            (2, 0),
+                                            (0, -2),
+                                            (0, 2),
+                                            // 4
+                                            (-2, 1),
+                                            (2, -1),
+                                            (-1, -2),
+                                            (1, 2),
+                                            (-2, -1),
+                                            (2, 1),
+                                            (1, -2),
+                                            (-1, 2),
+                                            // 5
+                                            (2, 2),
+                                            (-2, -2),
+                                            (2, -2),
+                                            (-2, 2),
+                                            // 6
+                                            (-3, 0),
+                                            (3, 0),
+                                            (0, -3),
+                                            (0, 3),
+                                            // 7
+                                            (-3, 1),
+                                            (3, -1),
+                                            (-1, -3),
+                                            (1, 3),
+                                            (-3, -1),
+                                            (3, 1),
+                                            (1, -3),
+                                            (-1, 3),
+                                            // 8
+                                            (-3, 2),
+                                            (3, -2),
+                                            (-2, -3),
+                                            (2, 3),
+                                            (-3, -2),
+                                            (3, 2),
+                                            (2, -3),
+                                            (-2, 3),
+                                            // 9
+                                            (-4, 0),
+                                            (4, 0),
+                                            (0, -4),
+                                            (0, 4),
+                                            // A
+                                            (-4, 1),
+                                            (4, -1),
+                                            (-1, -4),
+                                            (1, 4),
+                                            (-4, -1),
+                                            (4, 1),
+                                            (1, -4),
+                                            (-1, 4),];
 
     search_grid
 }

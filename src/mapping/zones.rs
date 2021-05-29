@@ -73,14 +73,13 @@ impl Map {
 
     pub fn get_zone(&self, position: (f32, f32)) -> i8 {
         let u_position = round_point2(position);
-        let index = self.points[u_position.0][u_position.1].zone_index;
-        index
+        self.points[u_position.0][u_position.1].zone_index
     }
 }
 
 impl Map {
-    fn borrow(&mut self, x: usize, y: usize) -> &mut MapPoint { return &mut self.points[x][y]; }
-    fn zone_index(&mut self, x: usize, y: usize) -> i8 { return self.points[x][y].zone_index; }
+    fn borrow(&mut self, x: usize, y: usize) -> &mut MapPoint { &mut self.points[x][y] }
+    fn zone_index(&mut self, x: usize, y: usize) -> i8 { self.points[x][y].zone_index }
 }
 
 fn flood_fill(map: &mut Map,
@@ -128,7 +127,6 @@ fn flood_fill(map: &mut Map,
         return;
     }
 
-    // if points[x][y].overlord_spot == target {
     if y > 0 {
         flood_fill(map, x, ((y as u32) - 1) as usize, target_height, zone_index, origin, sorted_base_locations);
     }
@@ -141,7 +139,4 @@ fn flood_fill(map: &mut Map,
     if x < map.points.len() - 1 {
         flood_fill(map, x + 1, y, target_height, zone_index, origin, sorted_base_locations);
     }
-    // }
-
-    return;
 }
