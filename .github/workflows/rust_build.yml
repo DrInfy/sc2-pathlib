@@ -79,7 +79,7 @@ jobs:
         virtualenv venv
         source venv/bin/activate
         pip install maturin
-        maturin develop -i python${{matrix.python_version}}
+        maturin develop --release
 
 
     # TODO only one .so file needs to be built and it can be run from any python version on the linux distribution, and this probably also works on mac
