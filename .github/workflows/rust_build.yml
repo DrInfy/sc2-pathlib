@@ -73,10 +73,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install virtualenv
 
-    - name: Create virtualenv
+    - name: Create virtualenv && Activate Linux/Mac
+      if: matrix.os != 'windows-latest'
       run: |
         virtualenv venv
         source venv/bin/activate
+        pip install maturin
+        maturin develop --release
+
+    - name: Create virtualenv && Activate Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        virtualenv venv
+        .venv\Scripts\activate.bat
         pip install maturin
         maturin develop --release
 
