@@ -2,7 +2,7 @@
 name = "sc2pathlib"
 version = "0.4.0"
 edition = "2018"
-
+authors = []
 [lib]
 bench = false
 name = "sc2pathlib"
