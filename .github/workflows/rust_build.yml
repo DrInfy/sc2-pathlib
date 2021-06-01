@@ -108,7 +108,6 @@ jobs:
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
         path: sc2pathlib/
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
 
   benchmark:
     name: Performance regression check
