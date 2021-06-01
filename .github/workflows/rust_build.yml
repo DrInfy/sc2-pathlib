@@ -85,7 +85,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         virtualenv venv
-        call venv\Scripts\activate.bat
+        venv\Scripts\Activate.ps1
         pip install maturin
         maturin develop --release
 
