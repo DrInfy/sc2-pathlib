@@ -19,9 +19,9 @@ def read_maze(file_name: str) -> List[List[int]]:
 
 maze = read_maze("tests/empty10x10.txt")
 pf = sc2pathlibp.PathFinder(maze)
-pf.normalize_influence(1)
+pf.normalize_influence(10)
 enemy_pos = (4, 0)
-start_pos = (5, 5)
+start_pos = (5, 2)
 pf.add_influence_walk([enemy_pos], 100, 7)
 end_result = pf.find_low_inside_walk(start_pos, enemy_pos, 5)
 print(end_result)

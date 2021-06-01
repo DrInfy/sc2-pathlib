@@ -150,7 +150,7 @@ impl Map {
             }
         }
 
-        return result;
+        result
     }
 
     /// Returns current influence value
@@ -158,7 +158,7 @@ impl Map {
         let map = self.get_map(map_type);
         let position_int = round_point2(position);
 
-        return map.current_influence(position_int) as f32;
+        map.current_influence(position_int) as f32
     }
 
     /// Finds the first reachable position within specified walking distance from the center point with lowest value
@@ -166,13 +166,13 @@ impl Map {
         let map = self.get_map(map_type);
         let center_int = round_point2(center);
 
-        return map.lowest_influence_walk(center_int, distance);
+        map.lowest_influence_walk(center_int, distance)
     }
 
     /// Finds the first reachable position within specified distance from the center point with lowest value
     pub fn lowest_influence(&self, map_type: u8, center: (f32, f32), distance: usize) -> ((usize, usize), f32) {
         let map = self.get_map(map_type);
-        return map.inline_lowest_value(center, distance);
+        map.inline_lowest_value(center, distance)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
@@ -186,7 +186,7 @@ impl Map {
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
         let map = self.get_map(map_type);
-        return map.find_path(start_int, end_int, possible_heuristic);
+        map.find_path(start_int, end_int, possible_heuristic)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
@@ -200,7 +200,7 @@ impl Map {
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
         let map = self.get_map(map_type);
-        return map.find_path_large(start_int, end_int, possible_heuristic);
+        map.find_path_large(start_int, end_int, possible_heuristic)
     }
 
     /// Find the path using influence values and returns the path and distance
@@ -213,7 +213,7 @@ impl Map {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
-        return map.find_path_influence(start_int, end_int, possible_heuristic);
+        map.find_path_influence(start_int, end_int, possible_heuristic)
     }
 
     /// Find the path using influence values and returns the path and distance
@@ -226,7 +226,7 @@ impl Map {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
-        return map.find_path_influence_large(start_int, end_int, possible_heuristic);
+        map.find_path_influence_large(start_int, end_int, possible_heuristic)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
@@ -241,7 +241,7 @@ impl Map {
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
         let map = self.get_map(map_type);
-        return map.find_path_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+        map.find_path_closer_than(start_int, end_int, possible_heuristic, distance_from_target)
     }
 
     /// Find the shortest path values without considering influence and returns the path and distance
@@ -256,7 +256,7 @@ impl Map {
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
         let map = self.get_map(map_type);
-        return map.find_path_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+        map.find_path_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target)
     }
 
     /// Find the path using influence values and returns the path and distance
@@ -270,7 +270,7 @@ impl Map {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
-        return map.find_path_influence_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+        map.find_path_influence_closer_than(start_int, end_int, possible_heuristic, distance_from_target)
     }
 
     /// Find the path using influence values and returns the path and distance
@@ -284,7 +284,7 @@ impl Map {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
         let map = self.get_map(map_type);
-        return map.find_path_influence_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target);
+        map.find_path_influence_large_closer_than(start_int, end_int, possible_heuristic, distance_from_target)
     }
 
     /// Finds a compromise where low influence matches with close position to the start position.
@@ -295,7 +295,7 @@ impl Map {
                             distance: f32)
                             -> ((f32, f32), f32) {
         let map = self.get_map(map_type);
-        return map.find_low_inside_walk(start, target, distance);
+        map.find_low_inside_walk(start, target, distance)
     }
 }
 
@@ -402,14 +402,13 @@ impl Map {
 
                 let c = points[x][y].cliff_type;
 
-                if c != Cliff::None {
-                    if points[x + 1][y].cliff_type != c
-                       && points[x - 1][y].cliff_type != c
-                       && points[x][y + 1].cliff_type != c
-                       && points[x][y - 1].cliff_type != c
-                    {
-                        points[x][y].cliff_type = Cliff::None;
-                    }
+                if c != Cliff::None
+                   && points[x + 1][y].cliff_type != c
+                   && points[x - 1][y].cliff_type != c
+                   && points[x][y + 1].cliff_type != c
+                   && points[x][y - 1].cliff_type != c
+                {
+                    points[x][y].cliff_type = Cliff::None;
                 }
 
                 if !set_handled_overlord_spots.contains(&point_hash) && points[x][y].overlord_spot {
@@ -515,7 +514,7 @@ fn flood_fill_overlord(points: &mut Vec<Vec<map_point::MapPoint>>,
 
     let mut result = true;
     points[x][y].overlord_spot = replacement;
-    // if points[x][y].overlord_spot == target {
+
     if y > 0 {
         result &= flood_fill_overlord(points, x, ((y as u32) - 1) as usize, target_height, replacement, set);
     }
@@ -528,7 +527,6 @@ fn flood_fill_overlord(points: &mut Vec<Vec<map_point::MapPoint>>,
     if x < points.len() - 1 {
         result &= flood_fill_overlord(points, x + 1, y, target_height, replacement, set);
     }
-    // }
 
-    return result;
+    result
 }

@@ -1,6 +1,8 @@
 use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
+use crate::helpers::point2_f32;
+
 mod angles;
 pub mod pos;
 mod pos_large;
@@ -235,7 +237,7 @@ impl PathFind {
     }
 
     /// Adds influence based on euclidean distance
-    pub fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+    pub fn add_influence_flat(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) {
         let value = max as usize;
         let mult_distance = distance * pos::MULTF32;
 
@@ -253,12 +255,10 @@ impl PathFind {
                 }
             }
         }
-
-        Ok(())
     }
 
     /// Adds influence based on walk distance
-    pub fn add_walk_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+    pub fn add_walk_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) {
         let mult = 1.0 / distance;
         let max_int = max as usize;
 
@@ -280,8 +280,6 @@ impl PathFind {
                 }
             }
         }
-
-        Ok(())
     }
 
     /// Adds influence based on walk distance
@@ -311,7 +309,7 @@ impl PathFind {
     pub fn lowest_influence_walk(&self, center: (usize, usize), distance: f32) -> ((usize, usize), f32) {
         let corrected_center = self.get_closest_pathable(center);
 
-        return self.lowest_influence_walk_inline(corrected_center, distance);
+        self.lowest_influence_walk_inline(corrected_center, distance)
     }
 
     #[inline]
@@ -869,7 +867,7 @@ impl PathFind {
 
     #[inline]
     fn get_closest_pathable(&self, start: (usize, usize)) -> (usize, usize) {
-        if self.auto_correct || self.map[start.0][start.1] > 0 {
+        if !self.auto_correct || self.map[start.0][start.1] > 0 {
             start
         } else {
             self.free_finder.find_free(start, &self.map, self.width, self.height)
@@ -885,65 +883,46 @@ impl PathFind {
 
         let corrected_start = self.get_closest_pathable(start_int);
         let corrected_target = self.get_closest_pathable(target_int);
-        let angle = angles::angle_between_f32(start, target);
-        let u_distance = distance as usize;
-        let rect = rectangle::Rectangle::init_from_center2(corrected_target,
-                                                           (u_distance, u_distance),
-                                                           self.width,
-                                                           self.height);
+        // let angle = angles::angle_between_f32(start, target);
+        // let u_distance = distance as usize;
 
-        let mut destinations = Vec::<((usize, usize), usize)>::new();
+        if current_distance > distance + 2.0 {
+            // Just do normal influence pathfinding to near the target.
+            let path =
+                self.find_path_influence_inline_closer_than(corrected_start, corrected_target, Some(1u8), distance);
+            if path.1 >= 0f32 {
+                return (point2_f32(*path.0.last().unwrap_or(&corrected_start)), path.1);
+            }
+            return ((0.0, 0.0), -1.0); // Failed
+        }
 
-        for x in rect.x..rect.x_end {
-            for y in rect.y..rect.y_end {
-                let new_val = self.map[x][y];
-                if new_val > 0 {
-                    destinations.push(((x, y), new_val));
-                }
+        let destinations = self.find_destinations_in_inline(corrected_start, distance + 1.0);
+
+        let mut best_target: ((f32, f32), f32) = (point2_f32(corrected_start), 0.0);
+        let mut best_influence = f32::MAX;
+        if current_distance < distance {
+            best_influence = self.map[corrected_start.0][corrected_start.1] as f32;
+        }
+
+        for destination in destinations {
+            let distance_from_target = octile_distance_f32(corrected_target, destination.0);
+            if distance_from_target > distance {
+                continue;
+            }
+
+            let distance_from_start = octile_distance_f32(corrected_start, destination.0);
+            // Use magic distance constant here to not move without reason.
+            // Let's take the distance into account so that same influence value is better when it's closer.
+            let distance_value = distance_from_start;
+            let influence = self.map[(destination.0).0][(destination.0).1] as f32 + distance_value;
+
+            if influence < best_influence {
+                best_target = (point2_f32(destination.0), distance);
+                best_influence = influence;
             }
         }
 
-        if destinations.is_empty() {
-            // Cannot find path to target
-            return ((0.0, 0.0), -1.0);
-        } else {
-            let mut best_target: ((f32, f32), f32) = ((0.0, 0.0), -1.0);
-
-            // Get a backup position that's closest to start up position
-            for destination in destinations {
-                let point = destination.0;
-                let distance_from_start = octile_distance_f32(start_int, point);
-
-                if distance_from_start < best_target.1 || best_target.1 < 0.0 {
-                    let point_f32 = (point.0 as f32 + 0.5, point.1 as f32 + 0.5);
-                    best_target = (point_f32, distance_from_start);
-                }
-            }
-
-            if current_distance < distance + 4.0 {
-                let best_influence = self.map[(best_target.0).0 as usize][(best_target.0).1 as usize];
-                //let mut best_distance_from_target = octile_distance_f64(best_target.0, target_int);
-                let destinations_from_start = self.find_destinations_in_inline(corrected_start, 5.0);
-                let mut angle_distance =
-                    angles::angle_distance(angle, angles::angle_between_f32(best_target.0, target));
-                let mut best_score = best_influence as f32 * (1.0 + angle_distance * 0.25);
-
-                for destination in destinations_from_start {
-                    let point = destination.0;
-                    let point_f32 = (point.0 as f32 + 0.5, point.1 as f32 + 0.5);
-                    let influence = self.map[point.0][point.1];
-                    angle_distance = angles::angle_distance(angle, angles::angle_between_f32(point_f32, target));
-                    let score = influence as f32 * (1.0 + angle_distance * 0.25);
-
-                    if score < best_score {
-                        best_score = score;
-                        best_target = (point_f32, destination.1);
-                    }
-                }
-            }
-
-            return best_target;
-        }
+        best_target
     }
 
     pub fn invert_djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
@@ -965,7 +944,7 @@ impl PathFind {
             destination_collection.push(((x, y), d));
         }
 
-        return destination_collection;
+        destination_collection
     }
 
     pub fn djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
@@ -987,6 +966,6 @@ impl PathFind {
             destination_collection.push(((x, y), d));
         }
 
-        return destination_collection;
+        destination_collection
     }
 }

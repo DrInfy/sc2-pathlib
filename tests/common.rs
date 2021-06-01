@@ -45,5 +45,5 @@ pub fn get_choke_map() -> Map {
     let grid3 = read_vec_from_file("tests/choke.txt");
 
     let map = Map::new(grid, grid2, grid3, 2, 2, 38, 38);
-    return map;
+    map
 }
