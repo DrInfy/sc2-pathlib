@@ -89,27 +89,6 @@ jobs:
         pip install maturin
         maturin develop --release
 
-
-    # TODO only one .so file needs to be built and it can be run from any python version on the linux distribution, and this probably also works on mac
-    - name: Create archive for Linux
-      run: |
-        sudo apt-get install tree
-        tree target/release
-        mv ./target/release/libsc2pathlib.so ./artifacts/sc2pathlib.so
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
-
-    - name: Create archive for Windows
-      run: |
-        dir target/release
-        dir
-        python ./rename_output.py ${{ matrix.python-version }}
-      if: matrix.os == 'windows-latest'
-
-    - name: Create archive for Mac OS
-      run: |
-        mv ./target/release/libsc2pathlib.dylib ./artifacts/sc2pathlib-macos.so
-      if: matrix.os == 'macos-latest'
-
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v1
       name: Upload archive
