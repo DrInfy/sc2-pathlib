@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable]
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     # https://github.com/actions-rs/toolchain
@@ -23,11 +23,13 @@ jobs:
       with:
         path: ~/.cargo/registry
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Cache cargo index
       uses: actions/cache@v2
       with:
         path: ~/.cargo/git
         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Cache cargo build
       uses: actions/cache@v2
       with:
@@ -59,33 +61,40 @@ jobs:
     - name: Create artifact directory
       run: mkdir artifacts
 
-    # TODO only one .so file needs to be built and it can be run from any python version on the linux distribution, and this probably also works on mac
-    - name: Create archive for Linux
-      run: |
-        sudo apt-get install tree
-        tree target/release
-        mv ./target/release/libsc2pathlib.so ./artifacts/sc2pathlib.so
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
+    # Create venv
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: x64
 
-    - name: Create archive for Windows
+    - name: Install Dependencies
       run: |
-        dir target/release
-        dir
-        python ./rename_output.py ${{ matrix.python-version }}
+        python -m pip install --upgrade pip
+        pip install virtualenv
+
+    - name: Create virtualenv && Activate Linux/Mac
+      if: matrix.os != 'windows-latest'
+      run: |
+        virtualenv venv
+        source venv/bin/activate
+        pip install maturin
+        maturin develop --release
+
+    - name: Create virtualenv && Activate Windows
       if: matrix.os == 'windows-latest'
-
-    - name: Create archive for Mac OS
       run: |
-        mv ./target/release/libsc2pathlib.dylib ./artifacts/sc2pathlib-macos.so
-      if: matrix.os == 'macos-latest'
+        virtualenv venv
+        venv\Scripts\Activate.ps1
+        pip install maturin
+        maturin develop --release
 
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v1
       name: Upload archive
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
-        path: artifacts/
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' || matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+        path: sc2pathlib/
 
   benchmark:
     name: Performance regression check

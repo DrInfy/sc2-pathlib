@@ -2,7 +2,7 @@
 name = "sc2pathlib"
 version = "0.4.0"
 edition = "2018"
-
+authors = []
 [lib]
 bench = false
 name = "sc2pathlib"
@@ -25,7 +25,7 @@ harness = false
 
  [profile.release]
  opt-level = 3
- debug=true
+ debug=false
 # panic="abort"
 # lto = "fat"
 # codegen-units = 1
