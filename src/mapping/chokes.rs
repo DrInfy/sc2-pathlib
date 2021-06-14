@@ -1,5 +1,5 @@
 use crate::mapping::map_point;
-use crate::path_find::pos::Pos;
+use crate::path_find::pos::{Pos, PositionAPI, NormalPosAPI};
 use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF32, SQRT2};
 use crate::path_find::PathFind;
 use pathfinding::prelude::absdiff;
@@ -35,7 +35,7 @@ pub fn solve_chokes(points: &mut Vec<Vec<map_point::MapPoint>>,
                 }
 
                 let pos = Pos(x_new, y_new);
-                let flight_distance = pos.euclidean_distance(&pos_start) as f32 / MULTF32;
+                let flight_distance = NormalPosAPI().euclidean_distance(&pos, &pos_start) as f32 / MULTF32;
 
                 if flight_distance > choke_distance || flight_distance < 2f32 {
                     continue;
@@ -188,7 +188,7 @@ impl Choke {
             points[pos1.0][pos1.1].is_choke = true;
             points[pos2.0][pos2.1].is_choke = true;
 
-            let flight_distance = pos1.euclidean_distance(&pos2) as f32 / MULTF32;
+            let flight_distance = NormalPosAPI().euclidean_distance(&pos1, &pos2) as f32 / MULTF32;
 
             let dots = flight_distance as usize;
             let unit_vector =
@@ -331,5 +331,5 @@ fn distance(first: (usize, usize), second: (usize, usize)) -> f32 {
     let pos1 = Pos(first.0, first.1);
     let pos2 = Pos(second.0, second.1);
 
-    pos1.euclidean_distance(&pos2) as f32 / MULTF32
+    NormalPosAPI().euclidean_distance(&pos1, &pos2) as f32 / MULTF32
 }

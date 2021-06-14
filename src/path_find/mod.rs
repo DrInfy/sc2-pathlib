@@ -2,6 +2,9 @@ use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
 use crate::helpers::point2_f32;
+use crate::path_find::pos::Pos;
+use crate::path_find::pos::{PositionAPI, NormalPosAPI, InfluencedPosAPI, InvertPosAPI};
+use crate::path_find::pos_large::{PosLargeAPI, InfluencedPosLargeAPI};
 
 mod angles;
 pub mod pos;
@@ -373,404 +376,85 @@ impl PathFind {
         (min_position, min_distance as f32 / pos::MULTF32)
     }
 
-    /// Find the shortest path values without considering influence and returns the path and distance
+    /// Find the shortest path and returns the path and distance.
+    /// Parameters:
+    ///     large:
+    ///         find path for a large unit
+    ///     influence:
+    ///         take influence into account
+    ///     possible_heuristic:
+    ///         distance heuristic for the A* algorithm
+    ///         0 - manhattan distance (default)
+    ///         1 - octile distance
+    ///         2 - euclidean distance
+    ///     possible_window:
+    ///         if set, restrict path to the given window of the map
+    ///     possible_distance_from_target:
+    ///         if set, short circuit when finding a position closer than the given distance from
+    ///         the target
     pub fn find_path(&self,
                      start: (usize, usize),
                      end: (usize, usize),
-                     possible_heuristic: Option<u8>)
+                     large: bool,
+                     influence: bool,
+                     possible_heuristic: Option<u8>,
+                     possible_window: Option<((usize, usize), (usize, usize))>,
+                     possible_distance_from_target: Option<f32>)
                      -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start: pos::Pos = pos::Pos(corrected_start.0, corrected_start.1);
-        let goal: pos::Pos = pos::Pos(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-
-        let result: Option<(Vec<pos::Pos>, usize)>;
-        match possible_heuristic.unwrap_or(0) {
-            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal), |p| *p == goal),
-            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal), |p| *p == goal),
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
-        }
-
-        (path, distance)
+        self.find_path_inline(start, end, large, influence, possible_heuristic, possible_window, possible_distance_from_target)
     }
 
-    /// Find the shortest path values without considering influence and returns the path and distance
-    pub fn find_path_large(&self,
-                           start: (usize, usize),
-                           end: (usize, usize),
-                           possible_heuristic: Option<u8>)
+    /// Basic version of find_path with all parameters except heuristic set to false or None.
+    pub fn find_path_basic(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>)
                            -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start: pos_large::PosLarge = pos_large::PosLarge(corrected_start.0, corrected_start.1);
-        let goal: pos_large::PosLarge = pos_large::PosLarge(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-
-        let result: Option<(Vec<pos_large::PosLarge>, usize)>;
-        match possible_heuristic.unwrap_or(0) {
-            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal), |p| *p == goal),
-            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal), |p| *p == goal),
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
-        }
-
-        (path, distance)
-    }
-
-    /// Find the path using influence values and returns the path and distance
-    pub fn find_path_influence(&self,
-                               start: (usize, usize),
-                               end: (usize, usize),
-                               possible_heuristic: Option<u8>)
-                               -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        self.find_path_influence_inline(corrected_start, corrected_end, possible_heuristic)
+        self.find_path_inline(start, end, false, false, possible_heuristic, None, None)
     }
 
     #[inline]
-    fn find_path_influence_inline(&self,
-                                  corrected_start: (usize, usize),
-                                  corrected_end: (usize, usize),
-                                  possible_heuristic: Option<u8>)
-                                  -> (Vec<(usize, usize)>, f32) {
-        let start = pos::InfluencedPos(corrected_start.0, corrected_start.1);
-        let goal = pos::InfluencedPos(corrected_end.0, corrected_end.1);
+    fn find_path_inline(&self,
+                        given_start: (usize, usize),
+                        given_end: (usize, usize),
+                        large: bool,
+                        influence: bool,
+                        possible_heuristic: Option<u8>,
+                        possible_window: Option<((usize, usize), (usize, usize))>,
+                        possible_distance_from_target: Option<f32>)
+                        -> (Vec<(usize, usize)>, f32) {
+        let corrected_start = self.get_closest_pathable(given_start);
+        let corrected_end = self.get_closest_pathable(given_end);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let infl = self.normal_influence;
+        let api: &dyn PositionAPI;
+        let normal_api = NormalPosAPI();
+        let large_api = PosLargeAPI();
+        let influence_api = InfluencedPosAPI{normal_influence: self.normal_influence};
+        let influence_large_api = InfluencedPosLargeAPI{normal_influence: self.normal_influence};
+        let start: Pos = Pos(corrected_start.0, corrected_start.1);
+        let goal: Pos = Pos(corrected_end.0, corrected_end.1);
 
-        let result: Option<(Vec<pos::InfluencedPos>, usize)>;
-
-        match possible_heuristic.unwrap_or(0) {
-            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, infl), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal, infl), |p| *p == goal),
-            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal, infl), |p| *p == goal),
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
+        match (large, influence) {
+            (false, false) => api = &normal_api,
+            (true,  false) => api = &large_api,
+            (false, true)  => api = &influence_api,
+            (true,  true)  => api = &influence_large_api,
         }
 
-        (path, distance)
-    }
+        let result: Option<(Vec<Pos>, usize)>;
+        let possible_u_distance: Option<usize> = possible_distance_from_target.map(|d| (d * pos::MULTF32) as usize);
 
-    /// Find the path using influence values and returns the path and distance
-    pub fn find_path_influence_large(&self,
-                                     start: (usize, usize),
-                                     end: (usize, usize),
-                                     possible_heuristic: Option<u8>)
-                                     -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start = pos_large::InfluencedPosLarge(corrected_start.0, corrected_start.1);
-        let goal = pos_large::InfluencedPosLarge(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let infl = self.normal_influence;
-
-        let result: Option<(Vec<pos_large::InfluencedPosLarge>, usize)>;
-
-        match possible_heuristic.unwrap_or(0) {
-            0 => result = astar(&start, |p| p.successors(grid), |p| p.manhattan_distance(&goal, infl), |p| *p == goal),
-            1 => result = astar(&start, |p| p.successors(grid), |p| p.octile_distance(&goal, infl), |p| *p == goal),
-            _ => result = astar(&start, |p| p.successors(grid), |p| p.euclidean_distance(&goal, infl), |p| *p == goal),
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
+        match (possible_window, possible_u_distance, possible_heuristic.unwrap_or(0)) {
+            (None, None, 0)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| *p == goal),
+            (None, None, 1)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.octile_distance(p, &goal), |p| *p == goal),
+            (None, None, _)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.euclidean_distance(p, &goal), |p| *p == goal),
+            (None, Some(u_distance), 0)         => result = astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| api.manhattan_distance(p, &goal) < u_distance),
+            (None, Some(u_distance), 1)         => result = astar(&start, |p| api.successors(p, grid), |p| api.octile_distance(p, &goal), |p| api.octile_distance(p, &goal) < u_distance),
+            (None, Some(u_distance), _)         => result = astar(&start, |p| api.successors(p, grid), |p| api.euclidean_distance(p, &goal), |p| api.euclidean_distance(p, &goal) < u_distance),
+            (Some(window), None, 0)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.manhattan_distance(p, &goal), |p| *p == goal),
+            (Some(window), None, 1)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.octile_distance(p, &goal), |p| *p == goal),
+            (Some(window), None, _)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.euclidean_distance(p, &goal), |p| *p == goal),
+            (Some(window), Some(u_distance), 0) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.manhattan_distance(p, &goal), |p| api.manhattan_distance(p, &goal) < u_distance),
+            (Some(window), Some(u_distance), 1) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.octile_distance(p, &goal), |p| api.octile_distance(p, &goal) < u_distance),
+            (Some(window), Some(u_distance), _) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.euclidean_distance(p, &goal), |p| api.euclidean_distance(p, &goal) < u_distance),
         }
-
-        (path, distance)
-    }
-
-    /// Find the shortest path values without considering influence and returns the path and distance. Short circuits when
-    /// a position is closer than `distance_from_target`
-    pub fn find_path_closer_than(&self,
-                                 start: (usize, usize),
-                                 end: (usize, usize),
-                                 possible_heuristic: Option<u8>,
-                                 distance_from_target: f32)
-                                 -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start: pos::Pos = pos::Pos(corrected_start.0, corrected_start.1);
-        let goal: pos::Pos = pos::Pos(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance_from_target * pos::MULTF32) as usize;
-        let result: Option<(Vec<pos::Pos>, usize)>;
-        match possible_heuristic.unwrap_or(0) {
-            0 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.manhattan_distance(&goal),
-                               |p| p.manhattan_distance(&goal) < u_distance)
-            }
-            1 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.octile_distance(&goal),
-                               |p| p.octile_distance(&goal) < u_distance)
-            }
-            _ => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.euclidean_distance(&goal),
-                               |p| p.euclidean_distance(&goal) < u_distance)
-            }
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
-        }
-
-        (path, distance)
-    }
-
-    /// Find the shortest path values without considering influence and returns the path and distance. Short circuits when
-    /// a position is closer than `distance_from_target`
-    pub fn find_path_large_closer_than(&self,
-                                       start: (usize, usize),
-                                       end: (usize, usize),
-                                       possible_heuristic: Option<u8>,
-                                       distance_from_target: f32)
-                                       -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start: pos_large::PosLarge = pos_large::PosLarge(corrected_start.0, corrected_start.1);
-        let goal: pos_large::PosLarge = pos_large::PosLarge(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let u_distance = (distance_from_target * pos::MULTF32) as usize;
-
-        let result: Option<(Vec<pos_large::PosLarge>, usize)>;
-        match possible_heuristic.unwrap_or(0) {
-            0 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.manhattan_distance(&goal),
-                               |p| p.manhattan_distance(&goal) < u_distance)
-            }
-            1 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.octile_distance(&goal),
-                               |p| p.octile_distance(&goal) < u_distance)
-            }
-            _ => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.euclidean_distance(&goal),
-                               |p| p.euclidean_distance(&goal) < u_distance)
-            }
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
-        }
-
-        (path, distance)
-    }
-
-    /// Find the path using influence values and returns the path and distance. Short circuits when
-    /// a position is closer than `distance_from_target`
-    pub fn find_path_influence_closer_than(&self,
-                                           start: (usize, usize),
-                                           end: (usize, usize),
-                                           possible_heuristic: Option<u8>,
-                                           distance_from_target: f32)
-                                           -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        self.find_path_influence_inline_closer_than(corrected_start,
-                                                    corrected_end,
-                                                    possible_heuristic,
-                                                    distance_from_target)
-    }
-
-    #[inline]
-    fn find_path_influence_inline_closer_than(&self,
-                                              corrected_start: (usize, usize),
-                                              corrected_end: (usize, usize),
-                                              possible_heuristic: Option<u8>,
-                                              distance_from_target: f32)
-                                              -> (Vec<(usize, usize)>, f32) {
-        let start = pos::InfluencedPos(corrected_start.0, corrected_start.1);
-        let goal = pos::InfluencedPos(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let infl = self.normal_influence;
-        let u_distance = (distance_from_target * (self.normal_influence as f32) * pos::MULTF32) as usize;
-        let result: Option<(Vec<pos::InfluencedPos>, usize)>;
-
-        match possible_heuristic.unwrap_or(0) {
-            0 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.manhattan_distance(&goal, infl),
-                               |p| p.manhattan_distance(&goal, infl) < u_distance)
-            }
-            1 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.octile_distance(&goal, infl),
-                               |p| p.octile_distance(&goal, infl) < u_distance)
-            }
-            _ => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.euclidean_distance(&goal, infl),
-                               |p| p.euclidean_distance(&goal, infl) < u_distance)
-            }
-        };
-
-        let mut path: Vec<(usize, usize)>;
-        let distance: f32;
-
-        match result {
-            None => {
-                path = Vec::<(usize, usize)>::new();
-                distance = 0.0
-            }
-            Some(t) => {
-                distance = (t.1 as f32) / pos::MULTF32;
-                path = Vec::<(usize, usize)>::with_capacity(t.0.len());
-                for pos in t.0 {
-                    path.push((pos.0, pos.1))
-                }
-            }
-        }
-
-        (path, distance)
-    }
-
-    /// Find the path using influence values and returns the path and distance. Short circuits when
-    /// a position is closer than `distance_from_target`
-    pub fn find_path_influence_large_closer_than(&self,
-                                                 start: (usize, usize),
-                                                 end: (usize, usize),
-                                                 possible_heuristic: Option<u8>,
-                                                 distance_from_target: f32)
-                                                 -> (Vec<(usize, usize)>, f32) {
-        let corrected_start = self.get_closest_pathable(start);
-        let corrected_end = self.get_closest_pathable(end);
-
-        let start = pos_large::InfluencedPosLarge(corrected_start.0, corrected_start.1);
-        let goal = pos_large::InfluencedPosLarge(corrected_end.0, corrected_end.1);
-        let grid: &Vec<Vec<usize>> = &self.map;
-        let infl = self.normal_influence;
-        let u_distance = (distance_from_target * (self.normal_influence as f32) * pos::MULTF32) as usize;
-        let result: Option<(Vec<pos_large::InfluencedPosLarge>, usize)>;
-
-        match possible_heuristic.unwrap_or(0) {
-            0 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.manhattan_distance(&goal, infl),
-                               |p| p.manhattan_distance(&goal, infl) < u_distance)
-            }
-            1 => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.octile_distance(&goal, infl),
-                               |p| p.octile_distance(&goal, infl) < u_distance)
-            }
-            _ => {
-                result = astar(&start,
-                               |p| p.successors(grid),
-                               |p| p.euclidean_distance(&goal, infl),
-                               |p| p.euclidean_distance(&goal, infl) < u_distance)
-            }
-        };
 
         let mut path: Vec<(usize, usize)>;
         let distance: f32;
@@ -796,7 +480,8 @@ impl PathFind {
     pub fn find_all_destinations(&self, start: (usize, usize)) -> PyResult<Vec<((usize, usize), f32)>> {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let grid: &Vec<Vec<usize>> = &self.map;
-        let result = dijkstra_all(&start, |p| p.successors(&grid));
+        let api = NormalPosAPI();
+        let result = dijkstra_all(&start, |p| api.successors(p, &grid));
 
         let mut destination_collection: Vec<((usize, usize), f32)> =
             Vec::<((usize, usize), f32)>::with_capacity(result.len());
@@ -821,8 +506,9 @@ impl PathFind {
         let start: pos::Pos = pos::Pos(start.0, start.1);
         let grid = &self.map;
         let u_distance = (distance * pos::MULTF32) as usize;
+        let api = NormalPosAPI();
 
-        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
+        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -843,13 +529,14 @@ impl PathFind {
                                              start: (usize, usize),
                                              distance: f32)
                                              -> Vec<((usize, usize), f32)> {
-        let start: pos::InfluencedPos = pos::InfluencedPos(start.0, start.1);
+        let start: Pos = Pos(start.0, start.1);
         let grid = &self.map;
         let u_distance = (distance * (self.normal_influence as f32) * pos::MULTF32) as usize;
+        let api = InfluencedPosAPI{normal_influence: self.normal_influence};
 
         let result = dijkstra_partial(&start,
-                                      |p| p.successors(&grid),
-                                      |p| p.octile_distance(&start, self.normal_influence) > u_distance);
+                                      |p| api.successors(p, &grid),
+                                      |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -889,7 +576,7 @@ impl PathFind {
         if current_distance > distance + 2.0 {
             // Just do normal influence pathfinding to near the target.
             let path =
-                self.find_path_influence_inline_closer_than(corrected_start, corrected_target, Some(1u8), distance);
+                self.find_path_inline(corrected_start, corrected_target, false, true, Some(1u8), None, Some(distance));
             if path.1 >= 0f32 {
                 return (point2_f32(*path.0.last().unwrap_or(&corrected_start)), path.1);
             }
@@ -927,11 +614,12 @@ impl PathFind {
 
     pub fn invert_djiktra(&self, start: (f32, f32), distance: f32) -> Vec<((usize, usize), f32)> {
         let start_int = (start.0 as usize, start.1 as usize);
-        let start: pos::InvertPos = pos::InvertPos(start_int.0, start_int.1);
+        let start: Pos = Pos(start_int.0, start_int.1);
         let grid = &self.map;
         let u_distance = (distance * pos::MULTF32) as usize;
+        let api = InvertPosAPI();
 
-        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
+        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -952,8 +640,8 @@ impl PathFind {
         let start: pos::Pos = pos::Pos(start_int.0, start_int.1);
         let grid = &self.map;
         let u_distance = (distance * pos::MULTF32) as usize;
-
-        let result = dijkstra_partial(&start, |p| p.successors(&grid), |p| p.octile_distance(&start) > u_distance);
+        let api = NormalPosAPI();
+        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
