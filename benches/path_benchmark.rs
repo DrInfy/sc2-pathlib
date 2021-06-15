@@ -6,7 +6,7 @@ fn bench_astar_automaton(c: &mut Criterion) {
     let path_find = get_pathfind("tests/AutomatonLE.txt");
     c.bench_function("find_path_automaton", |b| {
          b.iter(|| {
-              path_find.find_path((32, 51), (150, 118), Some(0));
+              path_find.find_path_basic((32, 51), (150, 118), Some(0));
           })
      });
 }
@@ -16,7 +16,7 @@ fn bench_astar_4x4(c: &mut Criterion) {
     // Run bench
     c.bench_function("find_path_4x4", |b| {
          b.iter(|| {
-              path_find.find_path((0, 0), (0, 2), Some(0));
+              path_find.find_path_basic((0, 0), (0, 2), Some(0));
           })
      });
 }
@@ -26,7 +26,7 @@ fn bench_astar_10x10(c: &mut Criterion) {
     // Run bench
     c.bench_function("find_path_10x10", |b| {
          b.iter(|| {
-              path_find.find_path((0, 0), (8, 9), Some(0));
+              path_find.find_path_basic((0, 0), (8, 9), Some(0));
           })
      });
 }
