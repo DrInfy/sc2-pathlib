@@ -5,6 +5,7 @@ use pyo3::prelude::*;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
+use super::vision::VisionMap;
 use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
@@ -27,6 +28,7 @@ pub struct Map {
     #[pyo3(get, set)]
     pub influence_reaper_map: bool,
     pub chokes: Vec<Choke>,
+    pub vision_map: VisionMap,
 }
 
 #[pymethods]
@@ -438,6 +440,7 @@ impl Map {
         let air_pathing = PathFind::new_internal(fly_map);
         let colossus_pathing = PathFind::new_internal(reaper_map.clone());
         let reaper_pathing = PathFind::new_internal(reaper_map);
+        let vision_map = VisionMap::new_internal(width, height);
 
         let influence_colossus_map = false;
         let influence_reaper_map = false;
@@ -451,7 +454,8 @@ impl Map {
               overlord_spots,
               influence_colossus_map,
               influence_reaper_map,
-              chokes }
+              chokes,
+              vision_map }
     }
 
     fn get_map(&self, map_type: u8) -> &PathFind {
