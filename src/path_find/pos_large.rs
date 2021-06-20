@@ -1,5 +1,8 @@
 use arrayvec::ArrayVec;
 use pathfinding::prelude::absdiff;
+use crate::path_find::pos::PositionAPI;
+use crate::path_find::pos::Pos;
+
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
@@ -9,18 +12,18 @@ pub static MULTF32: f32 = 10000.0;
 pub static DIAGONAL_MINUS_CARDINAL: usize = 4142;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct PosLarge(pub usize, pub usize);
+pub struct PosLargeAPI();
 
-impl PosLarge {
+impl PositionAPI for PosLargeAPI {
     #[inline]
-    pub fn manhattan_distance(&self, other: &PosLarge) -> usize {
-        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT
+    fn manhattan_distance(&self, start: &Pos, end: &Pos) -> usize {
+        (absdiff(start.0, end.0) + absdiff(start.1, end.1)) * MULT
     }
 
     #[inline]
-    pub fn euclidean_distance(&self, other: &PosLarge) -> usize {
-        let a = self.0 - other.0;
-        let b = self.1 - other.1;
+    fn euclidean_distance(&self, start: &Pos, end: &Pos) -> usize {
+        let a = start.0 - end.0;
+        let b = start.1 - end.1;
         let dist2 = a * a + b * b;
         ((dist2 as f32).sqrt() * MULTF32) as usize
 
@@ -28,9 +31,9 @@ impl PosLarge {
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &PosLarge) -> usize {
-        let dx = absdiff(self.0, other.0);
-        let dy = absdiff(self.1, other.1);
+    fn octile_distance(&self, start: &Pos, end: &Pos) -> usize {
+        let dx = absdiff(start.0, end.0);
+        let dy = absdiff(start.1, end.1);
 
         if dx > dy {
             MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
@@ -40,10 +43,15 @@ impl PosLarge {
     }
 
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(PosLarge, usize), 8> {
-        let &PosLarge(x, y) = self;
-        let mut arr = ArrayVec::<(PosLarge, usize), 8>::new();
-        //let arr = Vec<(PosLarge, f32)>();
+    fn successors(&self, pos: &Pos, grid: &[Vec<usize>]) -> ArrayVec<(Pos, usize), 8> {
+        self.successors_within(pos, grid, ((0, 0), (grid.len(), grid[0].len())))
+    }
+
+    #[inline]
+    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+        let &Pos(x, y) = pos;
+        let mut arr = ArrayVec::<(Pos, usize), 8>::new();
+        //let arr = Vec<(Pos, f32)>();
 
         let mut val_left: bool = false;
         let mut val_down: bool = false;
@@ -55,24 +63,26 @@ impl PosLarge {
         let mut val_right_up: bool = false;
         let mut val_right_down: bool = false;
 
-        if x > 0 {
+        let ((x0, y0), (x1, y1)) = window;
+
+        if x > x0 {
             val_left = grid[x - 1][y] > 0;
         }
 
-        if y > 0 {
+        if y > y0 {
             val_down = grid[x][y - 1] > 0;
         }
 
-        if x + 1 < grid.len() {
+        if x + 1 < x1 {
             val_right = grid[x + 1][y] > 0;
         }
 
-        if y + 1 < grid[0].len() {
+        if y + 1 < y1 {
             val_up = grid[x][y + 1] > 0;
         }
 
         if val_left {
-            arr.push((PosLarge(x - 1, y), MULT));
+            arr.push((Pos(x - 1, y), MULT));
 
             if val_down {
                 val_left_down = grid[x - 1][y - 1] > 0;
@@ -84,7 +94,7 @@ impl PosLarge {
         }
 
         if val_right {
-            arr.push((PosLarge(x + 1, y), MULT));
+            arr.push((Pos(x + 1, y), MULT));
 
             if val_down {
                 val_right_down = grid[x + 1][y - 1] > 0;
@@ -96,35 +106,35 @@ impl PosLarge {
         }
 
         if val_up && (val_left_up || val_right_up) {
-            arr.push((PosLarge(x, y + 1), MULT));
+            arr.push((Pos(x, y + 1), MULT));
         }
 
         if val_down && (val_left_down || val_right_down) {
-            arr.push((PosLarge(x, y - 1), MULT));
+            arr.push((Pos(x, y - 1), MULT));
         }
 
         if val_left && (val_left_up || val_left_down) {
-            arr.push((PosLarge(x - 1, y), MULT));
+            arr.push((Pos(x - 1, y), MULT));
         }
 
         if val_right && (val_right_up || val_right_down) {
-            arr.push((PosLarge(x + 1, y), MULT));
+            arr.push((Pos(x + 1, y), MULT));
         }
 
         if val_left_up {
-            arr.push((PosLarge(x - 1, y + 1), SQRT2));
+            arr.push((Pos(x - 1, y + 1), SQRT2));
         }
 
         if val_left_down {
-            arr.push((PosLarge(x - 1, y - 1), SQRT2));
+            arr.push((Pos(x - 1, y - 1), SQRT2));
         }
 
         if val_right_up {
-            arr.push((PosLarge(x + 1, y + 1), SQRT2));
+            arr.push((Pos(x + 1, y + 1), SQRT2));
         }
 
         if val_right_down {
-            arr.push((PosLarge(x + 1, y - 1), SQRT2));
+            arr.push((Pos(x + 1, y - 1), SQRT2));
         }
 
         arr
@@ -132,38 +142,45 @@ impl PosLarge {
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct InfluencedPosLarge(pub usize, pub usize);
+pub struct InfluencedPosLargeAPI {
+    pub normal_influence: usize
+}
 
-impl InfluencedPosLarge {
+impl PositionAPI for InfluencedPosLargeAPI {
     #[inline]
-    pub fn manhattan_distance(&self, other: &InfluencedPosLarge, normal_influence: usize) -> usize {
-        (absdiff(self.0, other.0) + absdiff(self.1, other.1)) * MULT * normal_influence
+    fn manhattan_distance(&self, start: &Pos, end: &Pos) -> usize {
+        (absdiff(start.0, end.0) + absdiff(start.1, end.1)) * MULT * self.normal_influence
     }
 
     #[inline]
-    pub fn euclidean_distance(&self, other: &InfluencedPosLarge, normal_influence: usize) -> usize {
-        let a = (self.0 - other.0) * normal_influence;
-        let b = (self.1 - other.1) * normal_influence;
+    fn euclidean_distance(&self, start: &Pos, end: &Pos) -> usize {
+        let a = (start.0 - end.0) * self.normal_influence;
+        let b = (start.1 - end.1) * self.normal_influence;
         let dist2 = a * a + b * b;
         ((dist2 as f32).sqrt() * MULTF32) as usize
     }
 
     #[inline]
-    pub fn octile_distance(&self, other: &InfluencedPosLarge, normal_influence: usize) -> usize {
-        let dx = absdiff(self.0, other.0);
-        let dy = absdiff(self.1, other.1);
+    fn octile_distance(&self, start: &Pos, end: &Pos) -> usize {
+        let dx = absdiff(start.0, end.0);
+        let dy = absdiff(start.1, end.1);
 
         if dx > dy {
-            (MULT * dx + DIAGONAL_MINUS_CARDINAL * dy) * normal_influence
+            (MULT * dx + DIAGONAL_MINUS_CARDINAL * dy) * self.normal_influence
         } else {
-            (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * normal_influence
+            (MULT * dy + DIAGONAL_MINUS_CARDINAL * dx) * self.normal_influence
         }
     }
 
     #[inline]
-    pub fn successors(&self, grid: &[Vec<usize>]) -> ArrayVec<(InfluencedPosLarge, usize), 8> {
-        let &InfluencedPosLarge(x, y) = self;
-        let mut arr = ArrayVec::<(InfluencedPosLarge, usize), 8>::new();
+    fn successors(&self, pos: &Pos, grid: &[Vec<usize>]) -> ArrayVec<(Pos, usize), 8> {
+        self.successors_within(pos, grid, ((0, 0), (grid.len(), grid[0].len())))
+    }
+
+    #[inline]
+    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+        let &Pos(x, y) = pos;
+        let mut arr = ArrayVec::<(Pos, usize), 8>::new();
 
         let mut val_left: usize = 0;
         let mut val_down: usize = 0;
@@ -175,19 +192,24 @@ impl InfluencedPosLarge {
         let mut val_right_up: usize = 0;
         let mut val_right_down: usize = 0;
 
-        if x > 0 {
+        let x0 = window.0.0;
+        let y0 = window.0.1;
+        let x1 = window.1.0;
+        let y1 = window.1.1;
+
+        if x > x0 {
             val_left = grid[x - 1][y];
         }
 
-        if y > 0 {
+        if y > y0 {
             val_down = grid[x][y - 1];
         }
 
-        if x + 1 < grid.len() {
+        if x + 1 < x1 {
             val_right = grid[x + 1][y];
         }
 
-        if y + 1 < grid[0].len() {
+        if y + 1 < y1 {
             val_up = grid[x][y + 1];
         }
 
@@ -212,35 +234,35 @@ impl InfluencedPosLarge {
         }
 
         if val_up > 0 && (val_left_up > 0 || val_right_up > 0) {
-            arr.push((InfluencedPosLarge(x, y + 1), val_up * MULT));
+            arr.push((Pos(x, y + 1), val_up * MULT));
         }
 
         if val_down > 0 && (val_left_down > 0 || val_right_down > 0) {
-            arr.push((InfluencedPosLarge(x, y - 1), val_down * MULT));
+            arr.push((Pos(x, y - 1), val_down * MULT));
         }
 
         if val_left > 0 && (val_left_up > 0 || val_left_down > 0) {
-            arr.push((InfluencedPosLarge(x - 1, y), val_left * MULT));
+            arr.push((Pos(x - 1, y), val_left * MULT));
         }
 
         if val_right > 0 && (val_right_up > 0 || val_right_down > 0) {
-            arr.push((InfluencedPosLarge(x + 1, y), val_right * MULT));
+            arr.push((Pos(x + 1, y), val_right * MULT));
         }
 
         if val_left_up > 0 {
-            arr.push((InfluencedPosLarge(x - 1, y + 1), val_left_up * SQRT2));
+            arr.push((Pos(x - 1, y + 1), val_left_up * SQRT2));
         }
 
         if val_left_down > 0 {
-            arr.push((InfluencedPosLarge(x - 1, y - 1), val_left_down * SQRT2));
+            arr.push((Pos(x - 1, y - 1), val_left_down * SQRT2));
         }
 
         if val_right_up > 0 {
-            arr.push((InfluencedPosLarge(x + 1, y + 1), val_right_up * SQRT2));
+            arr.push((Pos(x + 1, y + 1), val_right_up * SQRT2));
         }
 
         if val_right_down > 0 {
-            arr.push((InfluencedPosLarge(x + 1, y - 1), val_right_down * SQRT2));
+            arr.push((Pos(x + 1, y - 1), val_right_down * SQRT2));
         }
 
         arr

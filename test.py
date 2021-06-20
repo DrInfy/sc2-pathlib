@@ -44,13 +44,13 @@ result = pf.find_path((32, 51), (150, 129))
 print(f"path distance 2: {result[1]} for path: {result[0]}")
 
 pf.heuristic_accuracy = 0
-result = pf.find_path_influence((32, 51), (150, 129))
+result = pf.find_path((32, 51), (150, 129), influence=True)
 print(f"path influenced distance 0: {result[1]} for path: {result[0]}")
 pf.heuristic_accuracy = 1
-result = pf.find_path_influence((32, 51), (150, 129))
+result = pf.find_path((32, 51), (150, 129), influence=True)
 print(f"path influenced distance 1: {result[1]} for path: {result[0]}")
 pf.heuristic_accuracy = 2
-result = pf.find_path_influence((32, 51), (150, 129))
+result = pf.find_path((32, 51), (150, 129), influence=True)
 print(f"path influenced distance 2: {result[1]} for path: {result[0]}")
 
 expansions = [

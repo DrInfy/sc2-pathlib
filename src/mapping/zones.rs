@@ -100,8 +100,8 @@ fn flood_fill(map: &mut Map,
         let heuristic = Some(2u8);
 
         let mapping = map.get_map_mut(1);
-        let old_path = mapping.find_path(start, end, heuristic);
-        let new_path = mapping.find_path(start, end2, heuristic);
+        let old_path = mapping.find_path_basic(start, end, heuristic);
+        let new_path = mapping.find_path_basic(start, end2, heuristic);
 
         if old_path.1 < new_path.1 {
             // Old zone definition is better
