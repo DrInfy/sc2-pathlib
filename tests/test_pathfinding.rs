@@ -11,7 +11,7 @@ fn test_find_path_automaton_le() {
     let path_find = get_pathfind("tests/AutomatonLE.txt");
     let r = path_find.find_path_basic((32, 51), (150, 118), Some(0));
     let (_, distance) = r;
-    assert_eq!(distance, 147.1656);
+    assert_eq!(distance, 175.3076);
 }
 
 #[test]

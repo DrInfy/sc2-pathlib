@@ -17,7 +17,7 @@ fn test_find_path_map() {
 fn test_find_map_borders() {
     let map = get_choke_map();
     let r = map.get_borders();
-    assert_eq!(r.len(), 76);
+    assert_eq!(r.len(), 102);
 }
 
 #[test]
@@ -30,12 +30,12 @@ fn test_find_map_chokes() {
 #[test]
 fn test_ray_vision() {
     let mut map = get_choke_map();
-    let vision_unit = VisionUnit::new(false, false, (19f32, 8f32), 10f32);
+    let vision_unit = VisionUnit::new(false, false, (18f32, 8f32), 10f32);
     map.add_vision_unit(vision_unit);
     map.calculate_vision_map();
 
     assert_eq!(map.vision_status((12f32, 8f32)), 1);
-    assert_eq!(map.vision_status((20f32, 8f32)), 1);
+    assert_eq!(map.vision_status((19f32, 8f32)), 1);
     assert_eq!(map.vision_status((25f32, 8f32)), 0);
     assert_eq!(map.vision_status((27f32, 8f32)), 0);
 }

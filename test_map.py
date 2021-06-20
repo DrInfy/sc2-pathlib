@@ -1,3 +1,4 @@
+from sc2pathlib.mappings import MapType
 import sc2pathlib
 import time
 from typing import List
@@ -41,6 +42,8 @@ height = np.load(f"tests/{map_name}_height.npy")
 playable_area = Rect(18, 16, 148, 148)  # AutomatonLE
 ns_pf = time.perf_counter_ns()
 map = sc2pathlib.Sc2Map(pathing, placement, height, playable_area)
+
+print("Path distance: " + str(map.find_path(MapType.Ground, (32, 51), (150, 118))[1]))
 
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"Creating map object took {ns_pf / 1000 / 1000} ms.")
