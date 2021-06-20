@@ -1,10 +1,12 @@
 # noinspection PyUnresolvedReferences
+from .sc2pathlib import VisionUnit
 from .sc2pathlib import Map
 import numpy as np
 from typing import List, Optional, Tuple, Union
 from .choke import Choke
 from .mappings import MapsType, MapType
-
+from sc2.unit import Unit
+from sc2.position import Point2
 
 class Sc2Map:
     __slots__ = ['_overlord_spots', '_chokes', 'heuristic_accuracy', 'height_map', '_map']
@@ -114,14 +116,14 @@ class Sc2Map:
         else:
             self._map.remove_block(center, size)
 
-    def add_walk_influence(self, points: List["sc.Point2"], influence: float, range: float = 3):
+    def add_walk_influence(self, points: List["Point2"], influence: float, range: float = 3):
         """
         Influence applied fades up until the specified range
         """
         self._map.add_influence_walk(points, influence, range)
 
     def add_tank_influence(
-        self, points: List["sc.Point2"], influence: float, tank_min_range: float = 2.5, tank_max_range: float = 14.5
+        self, points: List["Point2"], influence: float, tank_min_range: float = 2.5, tank_max_range: float = 14.5
     ):
         """
         :param tank_min_range: Tank minimum range is 2, adding both unit radiuses to that and we'll estimate it to be 2.5.
@@ -130,7 +132,7 @@ class Sc2Map:
         self._map.add_influence_flat_hollow(points, influence, tank_min_range, tank_max_range)
 
     def add_pure_ground_influence(
-        self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float
+        self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float
     ):
         """
         Use this for units that have different ground attack compared to air attack, like Tempests.
@@ -138,14 +140,14 @@ class Sc2Map:
         self._map.add_influence_fading(MapsType.PureGround, points, influence, full_range, fade_max_range)
 
     def add_ground_influence(
-        self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float
+        self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float
     ):
         self._map.add_influence_fading(MapsType.Ground, points, influence, full_range, fade_max_range)
 
-    def add_air_influence(self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float):
+    def add_air_influence(self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float):
         self._map.add_influence_fading(MapsType.Air, points, influence, full_range, fade_max_range)
 
-    def add_both_influence(self, points: List["sc.Point2"], influence: float, full_range: float, fade_max_range: float):
+    def add_both_influence(self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float):
         self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
 
     def current_influence(self, map_type: MapType, position: Tuple[float, float]):
@@ -222,6 +224,39 @@ class Sc2Map:
         # target_int = (round(target[0]), round(target[1]))
         return self._map.find_low_inside_walk(map_type, start, target, distance)
 
+    def clear_vision(self) -> None:
+        self._map.clear_vision()
+
+    def add_vision_params(self, detector: bool, flying: bool, position: Tuple[float, float], sight_range: float) -> None:
+        vision_unit = VisionUnit(detector, flying, position, sight_range)
+        self.add_vision(vision_unit)
+
+    def add_vision_unit(self, unit: Unit) -> "VisionUnit":
+        vision_unit = VisionUnit(unit.detect_range > 0, unit.is_flying, unit.position_tuple, unit.sight_range)
+        self.add_vision(vision_unit)
+
+    def add_vision(self, vision_unit: VisionUnit) -> None:
+        self._map.add_vision_unit(vision_unit)
+
+    def calculate_vision(self) -> None:
+        self._map.calculate_vision_map()
+
+    def plot_vision(self, image_name: str = "vision_map", resize: int = 4) -> None:
+        """
+        Uses cv2 to draw current vision grid.
+        
+        requires opencv-python
+
+        :param path: list of points to colorize
+        :param image_name: name of the window to show the image in. Unique names update only when used multiple times.
+        :param resize: multiplier for resizing the image
+        :return: None
+        """
+
+        image = np.array(self._map.vision_map, dtype=np.uint8)
+        image = np.multiply(image, 120)
+        self.plot_image(image, image_name, resize)
+
     def plot(self, image_name: str = "map", resize: int = 4):
         """
         Uses cv2 to draw current pathing grid.
@@ -296,3 +331,5 @@ class Sc2Map:
         resized = cv2.resize(image, dsize=None, fx=resize, fy=resize, interpolation=cv2.INTER_NEAREST)
         cv2.imshow(image_name, resized)
         cv2.waitKey(1)
+
+    

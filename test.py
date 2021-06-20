@@ -1,4 +1,4 @@
-import sc2pathlibp
+import sc2pathlib
 import time
 from typing import List
 
@@ -17,7 +17,7 @@ def read_maze(file_name: str) -> List[List[int]]:
 
 
 maze = read_maze("tests/maze4x4.txt")
-pf = sc2pathlibp.PathFinder(maze)
+pf = sc2pathlib.PathFinder(maze)
 print(pf.map)
 print(pf.width)
 print(pf.height)
@@ -28,7 +28,7 @@ print(pf.lowest_influence_in_grid((2, 2), 5))
 print(pf.find_path((0, 0), (0, 2)))
 
 maze = read_maze("tests/AutomatonLE.txt")
-pf = sc2pathlibp.PathFinder(maze)
+pf = sc2pathlib.PathFinder(maze)
 pf.normalize_influence(10)
 
 pf.heuristic_accuracy = 0

@@ -1,4 +1,4 @@
-import sc2pathlibp
+import sc2pathlib
 import time
 from typing import List
 import numpy as np
@@ -40,7 +40,7 @@ height = np.load(f"tests/{map_name}_height.npy")
 
 playable_area = Rect(18, 16, 148, 148)  # AutomatonLE
 ns_pf = time.perf_counter_ns()
-map = sc2pathlibp.Sc2Map(pathing, placement, height, playable_area)
+map = sc2pathlib.Sc2Map(pathing, placement, height, playable_area)
 
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"Creating map object took {ns_pf / 1000 / 1000} ms.")
@@ -84,5 +84,18 @@ ns_pf = time.perf_counter_ns() - ns_pf
 print(f"Adding map influence took {ns_pf / 1000 / 1000} ms.")
 
 map.plot_zones("zones")
+
+ns_pf = time.perf_counter_ns()
+map.clear_vision()
+for i in range(1, 40):
+    # vision_unit = VisionUnit(i % 3 == 0, i % 2 == 0, (i * 10 + 30, i * 10 + 30), (i % 5 + 7))
+    map.add_vision_params(i % 3 == 0, False, (i * 3 + 30, (i % 10) * 7 + 30), 15)
+    # map.add_vision_params(i % 3 == 0, i % 2 == 0, (i * 5 + 30, (i % 5) * 20 + 30), (i % 5 + 7))
+map.calculate_vision()
+
+ns_pf = time.perf_counter_ns() - ns_pf
+print(f"Calculating vision took {ns_pf / 1000 / 1000} ms.")
+
+map.plot_vision()
 
 input("Press Enter to continue...")

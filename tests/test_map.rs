@@ -1,5 +1,5 @@
 use common::{get_choke_map, read_vec_from_file};
-use sc2pathlib::mapping::map::Map;
+use sc2pathlib::mapping::{map::Map, vision::VisionUnit};
 mod common;
 
 #[test]
@@ -25,4 +25,29 @@ fn test_find_map_chokes() {
     let map = get_choke_map();
     let r = map.get_chokes();
     assert_eq!(r.len(), 1);
+}
+
+#[test]
+fn test_ray_vision() {
+    let mut map = get_choke_map();
+    let vision_unit = VisionUnit::new(false, false, (19f32, 8f32), 10f32);
+    map.add_vision_unit(vision_unit);
+    map.calculate_vision_map();
+
+    assert_eq!(map.vision_status((12f32, 8f32)), 1);
+    assert_eq!(map.vision_status((20f32, 8f32)), 1);
+    assert_eq!(map.vision_status((25f32, 8f32)), 0);
+    assert_eq!(map.vision_status((27f32, 8f32)), 0);
+}
+
+#[test]
+fn test_flying_vision() {
+    let mut map = get_choke_map();
+    let vision_unit = VisionUnit::new(false, true, (19f32, 8f32), 10f32);
+    map.add_vision_unit(vision_unit);
+    map.calculate_vision_map();
+
+    assert_eq!(map.vision_status((21f32, 8f32)), 1);
+    assert_eq!(map.vision_status((27f32, 8f32)), 1);
+    assert_eq!(map.vision_status((31f32, 8f32)), 0);
 }

@@ -10,5 +10,6 @@ pub mod path_find;
 fn sc2pathlib(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<path_find::PathFind>()?;
     m.add_class::<mapping::map::Map>()?;
+    m.add_class::<mapping::vision::VisionUnit>()?;
     Ok(())
 }
