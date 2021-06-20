@@ -185,6 +185,11 @@ class Sc2Map:
 
         return self._map.find_path(map_type, start, end, large, influence, self.heuristic_accuracy, window, distance_from_target)
 
+    def find_path_influence(
+        self, map_type: MapType, start: Tuple[float, float], end: Tuple[float, float], large: bool = False
+    ) -> Tuple[List[Tuple[int, int]], float]:
+        return self.find_path(map_type, start, end, large, influence=True)
+
     def safest_spot(
         self, map_type: MapType, destination_center: Tuple[float, float], walk_distance: float
     ) -> Tuple[Tuple[int, int], float]:

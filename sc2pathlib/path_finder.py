@@ -93,6 +93,11 @@ class PathFinder:
                       (int(round(window[1][0])), int(round(window[1][1]))))
         return self._path_find.find_path(start_int, end_int, large, influence, self.heuristic_accuracy, window, distance_from_target)
 
+    def find_path_influence(
+        self, start: Tuple[float, float], end: Tuple[float, float], large: bool = False
+    ) -> Tuple[List[Tuple[int, int]], float]:
+        return self.find_path(start, end, large, influence=True)
+
     def safest_spot(self, destination_center: Tuple[float, float], walk_distance: float) -> Tuple[Tuple[int, int], float]:
         destination_int = (round(destination_center[0]), round(destination_center[1]))
         return self._path_find.lowest_influence_walk(destination_int, walk_distance)
