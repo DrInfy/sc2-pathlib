@@ -439,7 +439,13 @@ impl PathFind {
         }
 
         let result: Option<(Vec<Pos>, usize)>;
-        let possible_u_distance: Option<usize> = possible_distance_from_target.map(|d| (d * pos::MULTF32) as usize);
+        let possible_u_distance: Option<usize>;
+
+        if influence {
+            possible_u_distance = possible_distance_from_target.map(|d| (d * pos::MULTF32 * (self.normal_influence as f32)) as usize);
+        } else {
+            possible_u_distance = possible_distance_from_target.map(|d| (d * pos::MULTF32) as usize);
+        }
 
         match (possible_window, possible_u_distance, possible_heuristic.unwrap_or(0)) {
             (None, None, 0)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| *p == goal),
