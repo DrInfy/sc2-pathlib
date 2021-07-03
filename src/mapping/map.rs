@@ -5,6 +5,8 @@ use pyo3::prelude::*;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
+use super::vision::VisionStatus;
+use super::vision::{VisionMap, VisionUnit};
 use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
@@ -27,6 +29,7 @@ pub struct Map {
     #[pyo3(get, set)]
     pub influence_reaper_map: bool,
     pub chokes: Vec<Choke>,
+    pub vision_map: VisionMap,
 }
 
 #[pymethods]
@@ -54,6 +57,9 @@ impl Map {
 
     #[getter(colossus_pathing)]
     fn get_colossus_pathing(&self) -> Vec<Vec<usize>> { self.colossus_pathing.map.clone() }
+
+    #[getter(vision_map)]
+    fn get_vision_map(&self) -> Vec<Vec<usize>> { self.vision_map.draw_vision() }
 
     #[getter(overlord_spots)]
     fn get_overlord_spots(&self) -> Vec<(f32, f32)> { self.overlord_spots.clone() }
@@ -236,6 +242,12 @@ impl Map {
         let map = self.get_map(map_type);
         map.find_low_inside_walk(start, target, distance)
     }
+
+    // Vision map calls
+    pub fn clear_vision(&mut self) { self.vision_map.clear(); }
+    pub fn add_vision_unit(&mut self, unit: VisionUnit) { self.vision_map.add_unit(unit); }
+    pub fn calculate_vision_map(&mut self) { self.vision_map.calculate_vision_map(&self.points); }
+    pub fn vision_status(& self, point: (f32, f32)) -> usize { self.vision_map.vision_status(point) }
 }
 
 impl Map {
@@ -377,6 +389,7 @@ impl Map {
         let air_pathing = PathFind::new_internal(fly_map);
         let colossus_pathing = PathFind::new_internal(reaper_map.clone());
         let reaper_pathing = PathFind::new_internal(reaper_map);
+        let vision_map = VisionMap::new_internal(width, height);
 
         let influence_colossus_map = false;
         let influence_reaper_map = false;
@@ -390,7 +403,8 @@ impl Map {
               overlord_spots,
               influence_colossus_map,
               influence_reaper_map,
-              chokes }
+              chokes,
+              vision_map }
     }
 
     fn get_map(&self, map_type: u8) -> &PathFind {
