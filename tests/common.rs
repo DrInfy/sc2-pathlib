@@ -19,19 +19,12 @@ fn rot90(vec: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
 pub fn read_vec_from_file(file_path: &str) -> Vec<Vec<usize>> {
     let f = BufReader::new(File::open(file_path).unwrap());
     let mut arr = Vec::<Vec<usize>>::new();
-    let mut line_index = 0;
 
     for line in f.lines().map(|x| x.unwrap()) {
         let mut maze_line = vec![];
-        line_index += 1;
-        let mut index = 0;
         for char in line.chars() {
             if !char.is_digit(10) {
                 break;
-            }
-            index += 1;
-            if index > 40 {
-                // println!("Line {} index {} symbol {}: ", line_index, index, char);
             }
             let value = char.to_digit(10).unwrap() as usize;
             maze_line.push(value)

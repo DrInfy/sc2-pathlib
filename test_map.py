@@ -1,3 +1,9 @@
+import sys
+
+if "python-sc2" not in sys.path:
+    sys.path.insert(1, "python-sc2")
+
+
 from sc2pathlib.mappings import MapType
 import sc2pathlib
 import time

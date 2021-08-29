@@ -209,12 +209,19 @@ impl Map {
                      -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
-        let window_int = possible_window.map(|((x0, y0), (x1, y1))|
-                                                ((x0.round() as usize, y0.round() as usize),
-                                                 (x1.round() as usize, y1.round() as usize)));
+        let window_int = possible_window.map(|((x0, y0), (x1, y1))| {
+                                            ((x0.round() as usize, y0.round() as usize),
+                                             (x1.round() as usize, y1.round() as usize))
+                                        });
 
         let map = self.get_map(map_type);
-        map.find_path(start_int, end_int, large, influence, possible_heuristic, window_int, possible_distance_from_target)
+        map.find_path(start_int,
+                      end_int,
+                      large,
+                      influence,
+                      possible_heuristic,
+                      window_int,
+                      possible_distance_from_target)
     }
 
     /// Basic version of find_path with all parameters except heuristic set to false or None.
@@ -224,7 +231,6 @@ impl Map {
                            end: (f32, f32),
                            possible_heuristic: Option<u8>)
                            -> (Vec<(usize, usize)>, f32) {
-
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
@@ -247,7 +253,32 @@ impl Map {
     pub fn clear_vision(&mut self) { self.vision_map.clear(); }
     pub fn add_vision_unit(&mut self, unit: VisionUnit) { self.vision_map.add_unit(unit); }
     pub fn calculate_vision_map(&mut self) { self.vision_map.calculate_vision_map(&self.points); }
-    pub fn vision_status(& self, point: (f32, f32)) -> usize { self.vision_map.vision_status(point) }
+    pub fn vision_status(&self, point: (f32, f32)) -> usize { self.vision_map.vision_status(point) }
+
+    pub fn add_influence_to_vision(&mut self, map_type: u8, seen_value: usize, detection_value: usize) {
+        let map = self.get_map_mut(map_type);
+        let vision_map = &(self.vision_map); // self.get_vision();
+        map.add_influence_to_map_by_vision(vision_map, seen_value, detection_value);
+
+        // map.add_influence_to_map_by_vision(self.get_vision(), seen_value, detection_value)
+        // self.add_influence_to_map_by_vision(map, seen_value, detection_value);
+    }
+
+    fn add_influence_to_map_by_vision(&mut self, map: &mut  PathFind, seen_value: usize, detection_value: usize) {
+        let vision_map = self.get_vision();
+
+        for x in 0..map.width {
+            for y in 0..map.height {
+                let status = vision_map.vision_status((x as f32, y as f32));
+                if status == 1 {
+                    map.add_influence_spot((x, y), seen_value);
+                }
+                if status == 2 {
+                    map.add_influence_spot((x, y), detection_value);
+                }
+            }
+        }
+    }
 }
 
 impl Map {
@@ -422,6 +453,10 @@ impl Map {
         }
 
         panic!("Map type {} does not exist", map_type.to_string());
+    }
+
+    fn get_vision(&mut self) -> &mut VisionMap{
+        return &mut self.vision_map;
     }
 
     pub fn get_map_mut(&mut self, map_type: u8) -> &mut PathFind {

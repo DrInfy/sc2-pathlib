@@ -16,7 +16,11 @@ pub trait PositionAPI {
     fn euclidean_distance(&self, start: &Pos, end: &Pos) -> usize;
     fn octile_distance(&self, start: &Pos, end: &Pos) -> usize;
     fn successors(&self, pos: &Pos, grid: &[Vec<usize>]) -> ArrayVec<(Pos, usize), 8>;
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8>;
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8>;
 }
 
 pub struct NormalPosAPI();
@@ -53,7 +57,11 @@ impl PositionAPI for NormalPosAPI {
     }
 
     #[inline]
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = pos;
         let mut arr = ArrayVec::<(Pos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
@@ -135,7 +143,7 @@ impl PositionAPI for NormalPosAPI {
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct InfluencedPosAPI {
-    pub normal_influence: usize
+    pub normal_influence: usize,
 }
 
 impl PositionAPI for InfluencedPosAPI {
@@ -170,7 +178,11 @@ impl PositionAPI for InfluencedPosAPI {
     }
 
     #[inline]
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = pos;
         let mut arr = ArrayVec::<(Pos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
@@ -283,7 +295,11 @@ impl PositionAPI for InvertPosAPI {
         self.successors_within(pos, grid, ((0, 0), (grid.len(), grid[0].len())))
     }
 
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = pos;
         let mut arr = ArrayVec::<(Pos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();

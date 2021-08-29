@@ -1,3 +1,8 @@
+import sys
+
+if "python-sc2" not in sys.path:
+    sys.path.insert(1, "python-sc2")
+    
 import sc2pathlib
 import time
 from typing import List
@@ -8,11 +13,13 @@ def read_maze(file_name: str) -> List[List[int]]:
         m = text.read()
     lines = m.split("\n")
     final_maze = []
-    for y in range(0, len(lines[0])):
+    height = len(lines[0])
+    width = len(lines)
+    for y in range(0, height):
         maze_line = []
         final_maze.append(maze_line)
-        for x in range(0, len(lines)):
-            maze_line.append(int(lines[x][y]))
+        for x in range(0, width):
+            maze_line.append(int(lines[x][height - 1 - y]))
     return final_maze
 
 
@@ -94,6 +101,8 @@ pf.add_influence_walk([(56, 65), (110, 28), (100, 98)], 150, 10, False)
 ns_pf = time.perf_counter_ns() - ns_pf
 print(f"adding influence by walking distance took {ns_pf / 1000 / 1000} ms.")
 
+result = pf.find_path((29, 65), (154, 114))
+print("Distance between bases: " + str(result[1]))
 result = pf.find_path_influence((29, 65), (154, 114))
 # print(pf.map)
 # pf.reset()

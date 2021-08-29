@@ -1,7 +1,7 @@
+use crate::path_find::pos::Pos;
+use crate::path_find::pos::PositionAPI;
 use arrayvec::ArrayVec;
 use pathfinding::prelude::absdiff;
-use crate::path_find::pos::PositionAPI;
-use crate::path_find::pos::Pos;
 
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
@@ -48,7 +48,11 @@ impl PositionAPI for PosLargeAPI {
     }
 
     #[inline]
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = pos;
         let mut arr = ArrayVec::<(Pos, usize), 8>::new();
         //let arr = Vec<(Pos, f32)>();
@@ -143,7 +147,7 @@ impl PositionAPI for PosLargeAPI {
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct InfluencedPosLargeAPI {
-    pub normal_influence: usize
+    pub normal_influence: usize,
 }
 
 impl PositionAPI for InfluencedPosLargeAPI {
@@ -178,7 +182,11 @@ impl PositionAPI for InfluencedPosLargeAPI {
     }
 
     #[inline]
-    fn successors_within(&self, pos: &Pos, grid: &[Vec<usize>], window: ((usize, usize), (usize, usize))) -> ArrayVec<(Pos, usize), 8> {
+    fn successors_within(&self,
+                         pos: &Pos,
+                         grid: &[Vec<usize>],
+                         window: ((usize, usize), (usize, usize)))
+                         -> ArrayVec<(Pos, usize), 8> {
         let &Pos(x, y) = pos;
         let mut arr = ArrayVec::<(Pos, usize), 8>::new();
 
@@ -192,10 +200,10 @@ impl PositionAPI for InfluencedPosLargeAPI {
         let mut val_right_up: usize = 0;
         let mut val_right_down: usize = 0;
 
-        let x0 = window.0.0;
-        let y0 = window.0.1;
-        let x1 = window.1.0;
-        let y1 = window.1.1;
+        let x0 = window.0 .0;
+        let y0 = window.0 .1;
+        let x1 = window.1 .0;
+        let y1 = window.1 .1;
 
         if x > x0 {
             val_left = grid[x - 1][y];
