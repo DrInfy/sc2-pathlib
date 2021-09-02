@@ -4,7 +4,7 @@ from .sc2pathlib import Map
 import numpy as np
 from typing import List, Optional, Tuple, Union
 from .choke import Choke
-from .mappings import MapsType, MapType
+from .mappings import MapsType, MapType, VisionStatus
 from sc2.unit import Unit
 from sc2.position import Point2
 
@@ -240,6 +240,12 @@ class Sc2Map:
         Adds influence to enemy vision.
         """
         self._map.add_influence_to_vision(map_type, seen_value, detection_value)
+
+    def vision_status(self, position: Tuple[float, float]) -> VisionStatus:
+        """
+        Get vision status for a position
+        """
+        return self._map.vision_status(position)
 
     def plot_vision(self, image_name: str = "vision_map", resize: int = 4) -> None:
         """
