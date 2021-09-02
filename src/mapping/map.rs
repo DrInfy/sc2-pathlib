@@ -5,6 +5,8 @@ use pyo3::prelude::*;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
+use super::vision::VisionStatus;
+use super::vision::{VisionMap, VisionUnit};
 use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;
 use crate::mapping::map_point;
@@ -27,6 +29,7 @@ pub struct Map {
     #[pyo3(get, set)]
     pub influence_reaper_map: bool,
     pub chokes: Vec<Choke>,
+    pub vision_map: VisionMap,
 }
 
 #[pymethods]
@@ -54,6 +57,9 @@ impl Map {
 
     #[getter(colossus_pathing)]
     fn get_colossus_pathing(&self) -> Vec<Vec<usize>> { self.colossus_pathing.map.clone() }
+
+    #[getter(vision_map)]
+    fn get_vision_map(&self) -> Vec<Vec<usize>> { self.vision_map.draw_vision() }
 
     #[getter(overlord_spots)]
     fn get_overlord_spots(&self) -> Vec<(f32, f32)> { self.overlord_spots.clone() }
@@ -203,12 +209,19 @@ impl Map {
                      -> (Vec<(usize, usize)>, f32) {
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
-        let window_int = possible_window.map(|((x0, y0), (x1, y1))|
-                                                ((x0.round() as usize, y0.round() as usize),
-                                                 (x1.round() as usize, y1.round() as usize)));
+        let window_int = possible_window.map(|((x0, y0), (x1, y1))| {
+                                            ((x0.round() as usize, y0.round() as usize),
+                                             (x1.round() as usize, y1.round() as usize))
+                                        });
 
         let map = self.get_map(map_type);
-        map.find_path(start_int, end_int, large, influence, possible_heuristic, window_int, possible_distance_from_target)
+        map.find_path(start_int,
+                      end_int,
+                      large,
+                      influence,
+                      possible_heuristic,
+                      window_int,
+                      possible_distance_from_target)
     }
 
     /// Basic version of find_path with all parameters except heuristic set to false or None.
@@ -218,7 +231,6 @@ impl Map {
                            end: (f32, f32),
                            possible_heuristic: Option<u8>)
                            -> (Vec<(usize, usize)>, f32) {
-
         let start_int = (start.0.round() as usize, start.1.round() as usize);
         let end_int = (end.0.round() as usize, end.1.round() as usize);
 
@@ -235,6 +247,31 @@ impl Map {
                             -> ((f32, f32), f32) {
         let map = self.get_map(map_type);
         map.find_low_inside_walk(start, target, distance)
+    }
+
+    // Vision map calls
+    pub fn clear_vision(&mut self) { self.vision_map.clear(); }
+    pub fn add_vision_unit(&mut self, unit: VisionUnit) { self.vision_map.add_unit(unit); }
+    pub fn calculate_vision_map(&mut self) { self.vision_map.calculate_vision_map(&self.points); }
+    pub fn vision_status(&self, point: (f32, f32)) -> usize { self.vision_map.vision_status(point) }
+
+    pub fn add_influence_to_vision(&mut self, map_type: u8, seen_value: usize, detection_value: usize) {
+        let vision_map = &self.vision_map; // self.get_vision();
+        let map = {
+            if map_type == 0 {
+                &mut self.ground_pathing
+            } else if map_type == 1 {
+                &mut self.reaper_pathing
+            } else if map_type == 2 {
+                &mut self.colossus_pathing
+            } else if map_type == 3 {
+                &mut self.air_pathing
+            } else {
+                panic!("Map type {} does not exist", map_type.to_string())
+            }
+        };
+
+        map.add_influence_to_map_by_vision(&vision_map, seen_value, detection_value);
     }
 }
 
@@ -377,6 +414,7 @@ impl Map {
         let air_pathing = PathFind::new_internal(fly_map);
         let colossus_pathing = PathFind::new_internal(reaper_map.clone());
         let reaper_pathing = PathFind::new_internal(reaper_map);
+        let vision_map = VisionMap::new_internal(width, height);
 
         let influence_colossus_map = false;
         let influence_reaper_map = false;
@@ -390,7 +428,8 @@ impl Map {
               overlord_spots,
               influence_colossus_map,
               influence_reaper_map,
-              chokes }
+              chokes,
+              vision_map }
     }
 
     fn get_map(&self, map_type: u8) -> &PathFind {
@@ -409,6 +448,8 @@ impl Map {
 
         panic!("Map type {} does not exist", map_type.to_string());
     }
+
+    fn get_vision(&mut self) -> &mut VisionMap { return &mut self.vision_map; }
 
     pub fn get_map_mut(&mut self, map_type: u8) -> &mut PathFind {
         if map_type == 0 {

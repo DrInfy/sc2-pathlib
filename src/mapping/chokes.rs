@@ -1,5 +1,5 @@
 use crate::mapping::map_point;
-use crate::path_find::pos::{Pos, PositionAPI, NormalPosAPI};
+use crate::path_find::pos::{NormalPosAPI, Pos, PositionAPI};
 use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF32, SQRT2};
 use crate::path_find::PathFind;
 use pathfinding::prelude::absdiff;

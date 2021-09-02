@@ -2,9 +2,10 @@ use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
 use crate::helpers::point2_f32;
+use crate::mapping::vision::VisionMap;
 use crate::path_find::pos::Pos;
-use crate::path_find::pos::{PositionAPI, NormalPosAPI, InfluencedPosAPI, InvertPosAPI};
-use crate::path_find::pos_large::{PosLargeAPI, InfluencedPosLargeAPI};
+use crate::path_find::pos::{InfluencedPosAPI, InvertPosAPI, NormalPosAPI, PositionAPI};
+use crate::path_find::pos_large::{InfluencedPosLargeAPI, PosLargeAPI};
 
 mod angles;
 pub mod pos;
@@ -217,8 +218,13 @@ impl PathFind {
         }
     }
 
+    /// Adds influence to a single position
+    pub fn add_influence_spot(&mut self, position: (usize, usize), influence: usize) {
+        self.map[position.0][position.1] += influence;
+    }
+
     /// Adds influence based on euclidean distance
-    pub fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) -> PyResult<()> {
+    pub fn add_influence(&mut self, positions: Vec<(usize, usize)>, max: f32, distance: f32) {
         let mult = 1.0 / (distance * pos::MULTF32);
         let diameter = ((distance * 2f32) as usize) + 2;
         let rect_size = (diameter, diameter);
@@ -235,8 +241,6 @@ impl PathFind {
                 }
             }
         }
-
-        Ok(())
     }
 
     /// Adds influence based on euclidean distance
@@ -401,11 +405,20 @@ impl PathFind {
                      possible_window: Option<((usize, usize), (usize, usize))>,
                      possible_distance_from_target: Option<f32>)
                      -> (Vec<(usize, usize)>, f32) {
-        self.find_path_inline(start, end, large, influence, possible_heuristic, possible_window, possible_distance_from_target)
+        self.find_path_inline(start,
+                              end,
+                              large,
+                              influence,
+                              possible_heuristic,
+                              possible_window,
+                              possible_distance_from_target)
     }
 
     /// Basic version of find_path with all parameters except heuristic set to false or None.
-    pub fn find_path_basic(&self, start: (usize, usize), end: (usize, usize), possible_heuristic: Option<u8>)
+    pub fn find_path_basic(&self,
+                           start: (usize, usize),
+                           end: (usize, usize),
+                           possible_heuristic: Option<u8>)
                            -> (Vec<(usize, usize)>, f32) {
         self.find_path_inline(start, end, false, false, possible_heuristic, None, None)
     }
@@ -426,16 +439,16 @@ impl PathFind {
         let api: &dyn PositionAPI;
         let normal_api = NormalPosAPI();
         let large_api = PosLargeAPI();
-        let influence_api = InfluencedPosAPI{normal_influence: self.normal_influence};
-        let influence_large_api = InfluencedPosLargeAPI{normal_influence: self.normal_influence};
+        let influence_api = InfluencedPosAPI { normal_influence: self.normal_influence };
+        let influence_large_api = InfluencedPosLargeAPI { normal_influence: self.normal_influence };
         let start: Pos = Pos(corrected_start.0, corrected_start.1);
         let goal: Pos = Pos(corrected_end.0, corrected_end.1);
 
         match (large, influence) {
             (false, false) => api = &normal_api,
-            (true,  false) => api = &large_api,
-            (false, true)  => api = &influence_api,
-            (true,  true)  => api = &influence_large_api,
+            (true, false) => api = &large_api,
+            (false, true) => api = &influence_api,
+            (true, true) => api = &influence_large_api,
         }
 
         let result: Option<(Vec<Pos>, usize)>;
@@ -448,18 +461,71 @@ impl PathFind {
         }
 
         match (possible_window, possible_u_distance, possible_heuristic.unwrap_or(0)) {
-            (None, None, 0)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| *p == goal),
-            (None, None, 1)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.octile_distance(p, &goal), |p| *p == goal),
-            (None, None, _)                     => result = astar(&start, |p| api.successors(p, grid), |p| api.euclidean_distance(p, &goal), |p| *p == goal),
-            (None, Some(u_distance), 0)         => result = astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| api.manhattan_distance(p, &goal) < u_distance),
-            (None, Some(u_distance), 1)         => result = astar(&start, |p| api.successors(p, grid), |p| api.octile_distance(p, &goal), |p| api.octile_distance(p, &goal) < u_distance),
-            (None, Some(u_distance), _)         => result = astar(&start, |p| api.successors(p, grid), |p| api.euclidean_distance(p, &goal), |p| api.euclidean_distance(p, &goal) < u_distance),
-            (Some(window), None, 0)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.manhattan_distance(p, &goal), |p| *p == goal),
-            (Some(window), None, 1)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.octile_distance(p, &goal), |p| *p == goal),
-            (Some(window), None, _)             => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.euclidean_distance(p, &goal), |p| *p == goal),
-            (Some(window), Some(u_distance), 0) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.manhattan_distance(p, &goal), |p| api.manhattan_distance(p, &goal) < u_distance),
-            (Some(window), Some(u_distance), 1) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.octile_distance(p, &goal), |p| api.octile_distance(p, &goal) < u_distance),
-            (Some(window), Some(u_distance), _) => result = astar(&start, |p| api.successors_within(p, grid, window), |p| api.euclidean_distance(p, &goal), |p| api.euclidean_distance(p, &goal) < u_distance),
+            (None, None, 0) => {
+                result =
+                    astar(&start, |p| api.successors(p, grid), |p| api.manhattan_distance(p, &goal), |p| *p == goal)
+            }
+            (None, None, 1) => {
+                result = astar(&start, |p| api.successors(p, grid), |p| api.octile_distance(p, &goal), |p| *p == goal)
+            }
+            (None, None, _) => {
+                result =
+                    astar(&start, |p| api.successors(p, grid), |p| api.euclidean_distance(p, &goal), |p| *p == goal)
+            }
+            (None, Some(u_distance), 0) => {
+                result = astar(&start,
+                               |p| api.successors(p, grid),
+                               |p| api.manhattan_distance(p, &goal),
+                               |p| api.manhattan_distance(p, &goal) < u_distance)
+            }
+            (None, Some(u_distance), 1) => {
+                result = astar(&start,
+                               |p| api.successors(p, grid),
+                               |p| api.octile_distance(p, &goal),
+                               |p| api.octile_distance(p, &goal) < u_distance)
+            }
+            (None, Some(u_distance), _) => {
+                result = astar(&start,
+                               |p| api.successors(p, grid),
+                               |p| api.euclidean_distance(p, &goal),
+                               |p| api.euclidean_distance(p, &goal) < u_distance)
+            }
+            (Some(window), None, 0) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.manhattan_distance(p, &goal),
+                               |p| *p == goal)
+            }
+            (Some(window), None, 1) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.octile_distance(p, &goal),
+                               |p| *p == goal)
+            }
+            (Some(window), None, _) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.euclidean_distance(p, &goal),
+                               |p| *p == goal)
+            }
+            (Some(window), Some(u_distance), 0) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.manhattan_distance(p, &goal),
+                               |p| api.manhattan_distance(p, &goal) < u_distance)
+            }
+            (Some(window), Some(u_distance), 1) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.octile_distance(p, &goal),
+                               |p| api.octile_distance(p, &goal) < u_distance)
+            }
+            (Some(window), Some(u_distance), _) => {
+                result = astar(&start,
+                               |p| api.successors_within(p, grid, window),
+                               |p| api.euclidean_distance(p, &goal),
+                               |p| api.euclidean_distance(p, &goal) < u_distance)
+            }
         }
 
         let mut path: Vec<(usize, usize)>;
@@ -514,7 +580,8 @@ impl PathFind {
         let u_distance = (distance * pos::MULTF32) as usize;
         let api = NormalPosAPI();
 
-        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
+        let result =
+            dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -538,11 +605,10 @@ impl PathFind {
         let start: Pos = Pos(start.0, start.1);
         let grid = &self.map;
         let u_distance = (distance * (self.normal_influence as f32) * pos::MULTF32) as usize;
-        let api = InfluencedPosAPI{normal_influence: self.normal_influence};
+        let api = InfluencedPosAPI { normal_influence: self.normal_influence };
 
-        let result = dijkstra_partial(&start,
-                                      |p| api.successors(p, &grid),
-                                      |p| api.octile_distance(p, &start) > u_distance);
+        let result =
+            dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -625,7 +691,8 @@ impl PathFind {
         let u_distance = (distance * pos::MULTF32) as usize;
         let api = InvertPosAPI();
 
-        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
+        let result =
+            dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -647,7 +714,8 @@ impl PathFind {
         let grid = &self.map;
         let u_distance = (distance * pos::MULTF32) as usize;
         let api = NormalPosAPI();
-        let result = dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
+        let result =
+            dijkstra_partial(&start, |p| api.successors(p, &grid), |p| api.octile_distance(p, &start) > u_distance);
 
         let hash_map = result.0;
         let mut destination_collection: Vec<((usize, usize), f32)> =
@@ -661,5 +729,22 @@ impl PathFind {
         }
 
         destination_collection
+    }
+
+    pub fn add_influence_to_map_by_vision(&mut self,
+                                          vision_map: &VisionMap,
+                                          seen_value: usize,
+                                          detection_value: usize) {
+        for x in 0..self.width {
+            for y in 0..self.height {
+                let status = vision_map.vision_status((x as f32, y as f32));
+                if status == 1 {
+                    self.add_influence_spot((x, y), seen_value);
+                }
+                if status == 2 {
+                    self.add_influence_spot((x, y), detection_value);
+                }
+            }
+        }
     }
 }
