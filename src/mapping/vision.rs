@@ -174,7 +174,9 @@ fn calc_ground_detection(points: &mut Vec<Vec<VisionStatus>>,
             let d = octile_distance_f32(u_position, (x, y));
 
             if d <= sight_range {
-                if matches!(points[x][y], VisionStatus::NotSeen) || matches!(points[x][y], VisionStatus::NotSeenButDetected) {
+                if matches!(points[x][y], VisionStatus::NotSeen)
+                   || matches!(points[x][y], VisionStatus::NotSeenButDetected)
+                {
                     points[x][y] = VisionStatus::NotSeenButDetected;
                 } else {
                     points[x][y] = VisionStatus::Detected;
@@ -227,7 +229,7 @@ fn calc_ground_vision(points: &mut Vec<Vec<VisionStatus>>,
     let step_mult = 1.3f32;
     let steps = (sight_range * step_mult) as usize;
 
-    println!("Rays {} and steps {}", rays, steps);
+    // println!("Rays {} and steps {}", rays, steps);
 
     let u_position = round_point2(*position);
     let current_height = map_points[u_position.0][u_position.1].height;
@@ -247,24 +249,24 @@ fn calc_ground_vision(points: &mut Vec<Vec<VisionStatus>>,
             let step_f32 = step as f32 / step_mult;
             let new_pos = ((position.0 + v_x * step_f32) as usize, (position.1 + v_y * step_f32) as usize);
 
-            // TODO: Same for height difference
             if map_points[new_pos.0][new_pos.1].height > max_height_seen {
                 // Ray can't reach further
-                println!("Ray {} stopped at ({}, {}), angle was {} and vector was ({}, {}) with step {}",
-                         index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
+                // println!("Ray {} stopped at ({}, {}), angle was {} and vector was ({}, {}) with step {}",
+                //          index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
                 break;
             }
+            let status = points[new_pos.0][new_pos.1];
 
-            if matches!(points[new_pos.0][new_pos.1], VisionStatus::NotSeen) {
+            if matches!(status, VisionStatus::NotSeen) {
                 // if new_pos.0 == 25 && new_pos.1 == 8 {
-                println!("Ray {} set vision to ({}, {}), angle was {} and vector was ({}, {}) with step {}",
-                         index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
+                // println!("Ray {} set vision to ({}, {}), angle was {} and vector was ({}, {}) with step {}",
+                //          index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
                 // }
                 points[new_pos.0][new_pos.1] = VisionStatus::Seen;
-            } else if matches!(points[new_pos.0][new_pos.1], VisionStatus::NotSeenButDetected) {
+            } else if matches!(status, VisionStatus::NotSeenButDetected) {
                 // if new_pos.0 == 25 && new_pos.1 == 8 {
-                println!("Ray {} set vision to ({}, {}), angle was {} and vector was ({}, {}) with step {}",
-                         index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
+                // println!("Ray {} set vision to ({}, {}), angle was {} and vector was ({}, {}) with step {}",
+                //          index, new_pos.0, new_pos.1, angle, v_x, v_y, step_f32);
                 // }
                 points[new_pos.0][new_pos.1] = VisionStatus::Detected;
             }

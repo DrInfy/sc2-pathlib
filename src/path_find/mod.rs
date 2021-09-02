@@ -725,7 +725,10 @@ impl PathFind {
         destination_collection
     }
 
-    pub fn add_influence_to_map_by_vision(&mut self, vision_map: &VisionMap, seen_value: usize, detection_value: usize) {
+    pub fn add_influence_to_map_by_vision(&mut self,
+                                          vision_map: &VisionMap,
+                                          seen_value: usize,
+                                          detection_value: usize) {
         for x in 0..self.width {
             for y in 0..self.height {
                 let status = vision_map.vision_status((x as f32, y as f32));

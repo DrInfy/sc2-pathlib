@@ -235,6 +235,12 @@ class Sc2Map:
     def calculate_vision(self) -> None:
         self._map.calculate_vision_map()
 
+    def add_influence_to_vision(self, map_type: MapType, seen_value: int, detection_value: int) -> None:
+        """
+        Adds influence to enemy vision.
+        """
+        self._map.add_influence_to_vision(map_type, seen_value, detection_value)
+
     def plot_vision(self, image_name: str = "vision_map", resize: int = 4) -> None:
         """
         Uses cv2 to draw current vision grid.
