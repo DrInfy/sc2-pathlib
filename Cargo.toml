@@ -9,7 +9,8 @@ name = "sc2pathlib"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies.pyo3]
-version = "0.13.2"
+version = "0.17.3"
+features = ["multiple-pymethods"]
 
 [dependencies]
 pathfinding = "4.2.0"
