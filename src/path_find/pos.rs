@@ -1,5 +1,4 @@
 use arrayvec::ArrayVec;
-use pathfinding::prelude::absdiff;
 //static SQRT2: f32 = 1.4142135623730950488016887242097;
 pub static SQRT2: usize = 14142;
 pub static MULT: usize = 10000;
@@ -28,7 +27,7 @@ pub struct NormalPosAPI();
 impl PositionAPI for NormalPosAPI {
     #[inline]
     fn manhattan_distance(&self, start: &Pos, end: &Pos) -> usize {
-        (absdiff(start.0, end.0) + absdiff(start.1, end.1)) * MULT
+        (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) * MULT
     }
 
     #[inline]
@@ -41,8 +40,8 @@ impl PositionAPI for NormalPosAPI {
 
     #[inline]
     fn octile_distance(&self, start: &Pos, end: &Pos) -> usize {
-        let dx = absdiff(start.0, end.0);
-        let dy = absdiff(start.1, end.1);
+        let dx = start.0.abs_diff(end.0);
+        let dy = start.1.abs_diff(end.1);
 
         if dx > dy {
             MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
@@ -149,7 +148,7 @@ pub struct InfluencedPosAPI {
 impl PositionAPI for InfluencedPosAPI {
     #[inline]
     fn manhattan_distance(&self, start: &Pos, end: &Pos) -> usize {
-        (absdiff(start.0, end.0) + absdiff(start.1, end.1)) * MULT * self.normal_influence
+        (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) * MULT * self.normal_influence
     }
 
     #[inline]
@@ -162,8 +161,8 @@ impl PositionAPI for InfluencedPosAPI {
 
     #[inline]
     fn octile_distance(&self, start: &Pos, end: &Pos) -> usize {
-        let dx = absdiff(start.0, end.0);
-        let dy = absdiff(start.1, end.1);
+        let dx = start.0.abs_diff(end.0);
+        let dy = start.1.abs_diff(end.1);
 
         if dx > dy {
             (MULT * dx + DIAGONAL_MINUS_CARDINAL * dy) * self.normal_influence
@@ -268,7 +267,7 @@ pub struct InvertPosAPI();
 impl PositionAPI for InvertPosAPI {
     #[inline]
     fn manhattan_distance(&self, start: &Pos, end: &Pos) -> usize {
-        (absdiff(start.0, end.0) + absdiff(start.1, end.1)) * MULT
+        (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) * MULT
     }
 
     #[inline]
@@ -281,8 +280,8 @@ impl PositionAPI for InvertPosAPI {
 
     #[inline]
     fn octile_distance(&self, start: &Pos, end: &Pos) -> usize {
-        let dx = absdiff(start.0, end.0);
-        let dy = absdiff(start.1, end.1);
+        let dx = start.0.abs_diff(end.0);
+        let dy = start.1.abs_diff(end.1);
 
         if dx > dy {
             MULT * dx + DIAGONAL_MINUS_CARDINAL * dy
