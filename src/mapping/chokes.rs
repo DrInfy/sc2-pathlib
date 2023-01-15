@@ -2,7 +2,6 @@ use crate::mapping::map_point;
 use crate::path_find::pos::{NormalPosAPI, Pos, PositionAPI};
 use crate::path_find::pos::{DIAGONAL_MINUS_CARDINAL, MULT, MULTF32, SQRT2};
 use crate::path_find::PathFind;
-use pathfinding::prelude::absdiff;
 use pyo3::prelude::*;
 use std::cmp;
 use std::collections::HashSet;
@@ -316,8 +315,8 @@ pub fn group_chokes(choke_lines: &mut Vec<((usize, usize), (usize, usize))>,
 
 #[inline]
 pub fn octile_distance(first: (usize, usize), second: (usize, usize)) -> usize {
-    let dx = absdiff(first.0, second.0);
-    let dy = absdiff(first.1, second.1);
+    let dx = first.0.abs_diff(second.0);
+    let dy = first.1.abs_diff(second.1);
 
     if dx > dy {
         MULT * dx + DIAGONAL_MINUS_CARDINAL * dy

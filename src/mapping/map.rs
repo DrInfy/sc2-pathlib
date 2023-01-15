@@ -5,7 +5,6 @@ use pyo3::prelude::*;
 use std::collections::HashSet;
 
 use super::chokes::{group_chokes, Choke};
-use super::vision::VisionStatus;
 use super::vision::{VisionMap, VisionUnit};
 use crate::mapping::chokes::solve_chokes;
 use crate::mapping::climb::modify_climb;

@@ -1,4 +1,4 @@
-use pathfinding::prelude::{absdiff, astar, dijkstra_all, dijkstra_partial};
+use pathfinding::prelude::{astar, dijkstra_all, dijkstra_partial};
 use pyo3::prelude::*;
 
 use crate::helpers::point2_f32;
@@ -26,8 +26,8 @@ pub struct PathFind {
 
 #[inline]
 pub fn octile_distance(first: (usize, usize), other: (usize, usize)) -> usize {
-    let dx = absdiff(first.0, other.0);
-    let dy = absdiff(first.1, other.1);
+    let dx = first.0.abs_diff(other.0);
+    let dy = first.1.abs_diff(other.1);
 
     if dx > dy {
         pos::MULT * dx + pos::DIAGONAL_MINUS_CARDINAL * dy
