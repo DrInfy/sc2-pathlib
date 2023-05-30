@@ -9,7 +9,7 @@ from sc2.unit import Unit
 from sc2.position import Point2
 
 class Sc2Map:
-    __slots__ = ['_overlord_spots', '_chokes', 'heuristic_accuracy', 'height_map', '_map']
+    __slots__ = ['_overlord_spots', '_chokes', 'heuristic_accuracy', 'height_map', '_map', 'enable_vision_influence']
 
     def __init__(
         self,
