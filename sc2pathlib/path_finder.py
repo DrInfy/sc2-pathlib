@@ -128,7 +128,7 @@ class PathFinder:
 
     def find_low_inside_walk(
         self, start: Tuple[float, float], target: Tuple[float, float], distance: Union[int, float]
-    ) -> (Tuple[float, float], float):
+    ) -> Tuple[Tuple[float, float], float]:
         """
         Finds a compromise where low influence matches with close position to the start position.
 

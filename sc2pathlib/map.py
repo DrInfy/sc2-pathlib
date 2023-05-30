@@ -9,7 +9,7 @@ from sc2.unit import Unit
 from sc2.position import Point2
 
 class Sc2Map:
-    __slots__ = ['_overlord_spots', '_chokes', 'heuristic_accuracy', 'height_map', '_map']
+    __slots__ = ['_overlord_spots', '_chokes', 'heuristic_accuracy', 'height_map', '_map', 'enable_vision_influence']
 
     def __init__(
         self,
@@ -22,6 +22,7 @@ class Sc2Map:
         self._overlord_spots: Optional[List[Tuple[float, float]]] = None
         self._chokes: Optional[List[Choke]] = None
         self.heuristic_accuracy = 1  # Octile distance / set to 2 for optimal accuracy but less performance
+        self.enable_vision_influence = False # If enabled, only adds influence to where enemy bot can see
 
         self.height_map = height_map
         self._map = Map(
@@ -129,7 +130,10 @@ class Sc2Map:
         :param tank_min_range: Tank minimum range is 2, adding both unit radiuses to that and we'll estimate it to be 2.5.
         :param tank_max_range: Same for max range, 13, but but with unit radius, let's say it's 14.5 instead to err on the safe side
         """
-        self._map.add_influence_flat_hollow(points, influence, tank_min_range, tank_max_range)
+        if self.enable_vision_influence:
+            self._map.add_influence_flat_hollow_vision(points, influence, tank_min_range, tank_max_range)
+        else:
+            self._map.add_influence_flat_hollow(points, influence, tank_min_range, tank_max_range)
 
     def add_pure_ground_influence(
         self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float
@@ -137,18 +141,30 @@ class Sc2Map:
         """
         Use this for units that have different ground attack compared to air attack, like Tempests.
         """
-        self._map.add_influence_fading(MapsType.PureGround, points, influence, full_range, fade_max_range)
+        if self.enable_vision_influence:
+            self._map.add_influence_fading_vision(MapsType.PureGround, points, influence, full_range, fade_max_range)
+        else:
+            self._map.add_influence_fading(MapsType.PureGround, points, influence, full_range, fade_max_range)
 
     def add_ground_influence(
         self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float
     ):
-        self._map.add_influence_fading(MapsType.Ground, points, influence, full_range, fade_max_range)
+        if self.enable_vision_influence:
+            self._map.add_influence_fading_vision(MapsType.Ground, points, influence, full_range, fade_max_range)
+        else:
+            self._map.add_influence_fading(MapsType.Ground, points, influence, full_range, fade_max_range)
 
     def add_air_influence(self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float):
-        self._map.add_influence_fading(MapsType.Air, points, influence, full_range, fade_max_range)
+        if self.enable_vision_influence:
+            self._map.add_influence_fading_vision(MapsType.Air, points, influence, full_range, fade_max_range)
+        else:
+            self._map.add_influence_fading(MapsType.Air, points, influence, full_range, fade_max_range)
 
     def add_both_influence(self, points: List["Point2"], influence: float, full_range: float, fade_max_range: float):
-        self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
+        if self.enable_vision_influence:
+            self._map.add_influence_fading_vision(MapsType.Both, points, influence, full_range, fade_max_range)
+        else:
+            self._map.add_influence_fading(MapsType.Both, points, influence, full_range, fade_max_range)
 
     def current_influence(self, map_type: MapType, position: Tuple[float, float]):
         """
