@@ -70,7 +70,7 @@ jobs:
         target: ${{ matrix.target }}
         command: build
         manylinux: auto
-        args: --release
+        args: --release --out dist
     
     - name: Install built wheel
       run: |
