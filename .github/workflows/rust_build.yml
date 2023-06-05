@@ -70,7 +70,7 @@ jobs:
         target: x64
         command: build
         manylinux: auto
-        args: --release --out dist
+        args: --release --interpreter ${{ matrix.python-version }} --out dist
     
     - name: Install built wheel
       run: |
