@@ -68,8 +68,9 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         target: ${{ matrix.target }}
+        command: develop
         manylinux: auto
-        args: --release --out sc2pathlib
+        args: --release
 
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v3
