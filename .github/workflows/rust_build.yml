@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable]
-        python-version: [3.7, 3.8, 3.9, 3.10.9, 3.11]
+        python-version: [3.9, 3.10.9, 3.11]
 
     steps:
     # https://github.com/actions-rs/toolchain
@@ -36,11 +36,7 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Install latest stable
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+    - uses: dtolnay/rust-toolchain@stable
 
     - name: Run cargo check
       uses: actions-rs/cargo@v1
@@ -63,7 +59,7 @@ jobs:
 
     # Create venv
     - name: Setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
@@ -72,10 +68,11 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         target: ${{ matrix.target }}
+        manylinux: auto
         args: --release --out sc2pathlib
 
     # See - https://github.com/actions/upload-artifact/issues/39
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       name: Upload archive
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
