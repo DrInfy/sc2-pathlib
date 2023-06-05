@@ -74,7 +74,7 @@ jobs:
     
     - name: Install built wheel
       run: |
-         pip install sc2pathlib --target=sc2pathlib_dist --no-index --find-links dist --force-reinstall
+         python -m pip install sc2pathlib --target=sc2pathlib_dist --no-index --find-links dist --force-reinstall
 
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v3
