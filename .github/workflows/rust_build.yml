@@ -67,7 +67,7 @@ jobs:
     - name: Build wheels
       uses: PyO3/maturin-action@v1
       with:
-        target: ${{ matrix.target }}
+        target: x64
         command: build
         manylinux: auto
         args: --release --out dist
