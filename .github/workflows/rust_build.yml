@@ -68,16 +68,20 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         target: ${{ matrix.target }}
-        command: develop
+        command: build
         manylinux: auto
         args: --release
+    
+    - name: Install built wheel
+      run: |
+         pip install sc2pathlib --target=sc2pathlib_dist --no-index --find-links dist --force-reinstall
 
     # See - https://github.com/actions/upload-artifact/issues/39
     - uses: actions/upload-artifact@v3
       name: Upload archive
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
-        path: sc2pathlib/
+        path: sc2pathlib_dist/
 
   benchmark:
     name: Performance regression check
