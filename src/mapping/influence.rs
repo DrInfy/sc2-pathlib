@@ -80,6 +80,47 @@ impl Map {
         }
     }
 
+    pub fn add_influence_flat_hollow_vision(&mut self, positions: Vec<(f32, f32)>, influence: f32, min: f32, max: f32) {
+        let value = influence as usize;
+        let mult_min = min * pos::MULTF32;
+        let mult_max = max * pos::MULTF32;
+
+        let vision = &self.vision_map;
+
+        // Duplicate code here because rust is stupid
+        let mut maps = Vec::<&mut PathFind>::new();
+        maps.push(&mut self.ground_pathing);
+
+        if self.influence_colossus_map {
+            maps.push(&mut self.colossus_pathing);
+        }
+        if self.influence_reaper_map {
+            maps.push(&mut self.reaper_pathing);
+        }
+
+        let diameter = ((max * 2f32) as usize) + 2;
+        let rect_size = (diameter, diameter);
+
+        for position_f in &positions {
+            let position = (position_f.0.round() as usize, position_f.1.round() as usize);
+            let rect = rectangle::Rectangle::init_from_center2(position, rect_size, maps[0].width, maps[0].height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    let d = octile_distance(position, (x, y)) as f32;
+                    if d < mult_max && d > mult_min && vision.vision_status_int((x, y)) != 0 {
+                        for mapping in maps.iter_mut() {
+                            let old_val = mapping.map[x][y];
+                            if old_val > 0 {
+                                mapping.map[x][y] = old_val + value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn add_influence_fading(&mut self,
                                 map_type: usize,
                                 positions: Vec<(f32, f32)>,
@@ -114,6 +155,89 @@ impl Map {
                 for y in rect.y..rect.y_end {
                     let d = octile_distance(position, (x, y)) as f32;
                     if d < mult_max {
+                        if d < mult_min {
+                            for mapping in maps.iter_mut() {
+                                let old_val = mapping.map[x][y];
+                                if old_val > 0 {
+                                    mapping.map[x][y] = old_val + value;
+                                }
+                            }
+                        } else {
+                            // Fading threshold
+                            let value_fading = (influence * (1.0 - (d * mult - min) * mult2)) as usize;
+                            for mapping in maps.iter_mut() {
+                                let old_val = mapping.map[x][y];
+                                if old_val > 0 && value_fading > 0 {
+                                    mapping.map[x][y] = old_val + value_fading;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn add_influence_fading_vision(&mut self,
+                                       map_type: usize,
+                                       positions: Vec<(f32, f32)>,
+                                       influence: f32,
+                                       min: f32,
+                                       max: f32) {
+        let mult = 1.0 / pos::MULTF32;
+        let mult2 = 1.0 / (max - min);
+        let value = influence as usize;
+        let mult_min = min * pos::MULTF32;
+        let mult_max = max * pos::MULTF32;
+        let vision = &self.vision_map;
+
+        let mut maps = Vec::<&mut PathFind>::new();
+
+        // Duplicate code here because rust is stupid
+        if map_type == MAPS_PURE_GROUND {
+            maps.push(&mut self.ground_pathing);
+
+            if self.influence_reaper_map {
+                maps.push(&mut self.reaper_pathing);
+            }
+        } else if map_type == MAPS_GROUND {
+            maps.push(&mut self.ground_pathing);
+
+            if self.influence_colossus_map {
+                maps.push(&mut self.colossus_pathing);
+            }
+            if self.influence_reaper_map {
+                maps.push(&mut self.reaper_pathing);
+            }
+        } else if map_type == MAPS_AIR {
+            maps.push(&mut self.air_pathing);
+
+            if self.influence_colossus_map {
+                maps.push(&mut self.colossus_pathing);
+            }
+        } else {
+            maps.push(&mut self.ground_pathing);
+            maps.push(&mut self.air_pathing);
+
+            if self.influence_colossus_map {
+                maps.push(&mut self.colossus_pathing);
+            }
+            if self.influence_reaper_map {
+                maps.push(&mut self.reaper_pathing);
+            }
+        }
+
+        let diameter = ((max * 2f32) as usize) + 2;
+        let rect_size = (diameter, diameter);
+
+        for position_f in &positions {
+            let position = (position_f.0.round() as usize, position_f.1.round() as usize);
+            let rect = rectangle::Rectangle::init_from_center2(position, rect_size, maps[0].width, maps[0].height);
+
+            for x in rect.x..rect.x_end {
+                for y in rect.y..rect.y_end {
+                    let d = octile_distance(position, (x, y)) as f32;
+                    if d < mult_max && vision.vision_status_int((x, y)) != 0 {
                         if d < mult_min {
                             for mapping in maps.iter_mut() {
                                 let old_val = mapping.map[x][y];
