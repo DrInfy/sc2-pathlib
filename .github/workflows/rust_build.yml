@@ -67,11 +67,6 @@ jobs:
     - name: Verify symlink for gettext
       if: runner.os == 'macOS'
       run: ls -l /usr/local/opt/gettext/lib/libintl.8.dylib
-
-    - name: Set DYLD_LIBRARY_PATH
-      if: runner.os == 'macOS'
-      env:
-        DYLD_LIBRARY_PATH: /opt/homebrew/opt/gettext/lib
         
     - name: Debug Python setup
       if: runner.os == 'macOS'
