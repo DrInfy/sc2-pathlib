@@ -62,6 +62,18 @@ jobs:
       if: runner.os == 'macOS'
       run: brew install gettext
       
+    - name: Recreate gettext symlinks
+      if: runner.os == 'macOS'
+      run: |
+        brew link --force gettext
+        sudo ln -sf /usr/local/opt/gettext/lib/libintl.8.dylib /usr/local/lib/libintl.8.dylib
+        
+    - name: Verify gettext library path
+      if: runner.os == 'macOS'
+      run: |
+        ls -l /usr/local/opt/gettext/lib
+        ls -l /usr/local/lib | grep libintl
+    
     # Create venv
     - name: Setup python
       uses: actions/setup-python@v4
