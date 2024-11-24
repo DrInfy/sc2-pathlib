@@ -57,22 +57,22 @@ jobs:
     - name: Create artifact directory
       run: mkdir artifacts
       
-    # Install gettext on macOS (macOS-specific step)
-    - name: Install gettext on macOS
-      if: runner.os == 'macOS'
-      run: brew install gettext
-      
-    - name: Recreate gettext symlinks
+    # macOS-specific steps
+    - name: Recreate gettext symlinks (Apple Silicon)
       if: runner.os == 'macOS'
       run: |
-        brew link --force gettext
-        sudo ln -sf /usr/local/opt/gettext/lib/libintl.8.dylib /usr/local/lib/libintl.8.dylib
-        
+        sudo ln -sf /opt/homebrew/opt/gettext/lib/libintl.8.dylib /opt/homebrew/lib/libintl.8.dylib
+
     - name: Verify gettext library path
       if: runner.os == 'macOS'
       run: |
-        ls -l /usr/local/opt/gettext/lib
-        ls -l /usr/local/lib | grep libintl
+        ls -l /opt/homebrew/opt/gettext/lib
+        ls -l /opt/homebrew/lib | grep libintl
+
+    - name: Set DYLD_LIBRARY_PATH
+      if: runner.os == 'macOS'
+      run: |
+        export DYLD_LIBRARY_PATH=/opt/homebrew/opt/gettext/lib:$DYLD_LIBRARY_PATH
     
     # Create venv
     - name: Setup python
