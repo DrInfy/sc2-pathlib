@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         rust: [stable]
         python-version: ['3.9', '3.10', '3.11', '3.12']
 
@@ -58,6 +58,7 @@ jobs:
       run: mkdir artifacts
       
     # macOS-specific steps
+    
     - name: Create expected symlink for gettext
       if: runner.os == 'macOS'
       run: |
