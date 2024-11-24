@@ -56,7 +56,12 @@ jobs:
 
     - name: Create artifact directory
       run: mkdir artifacts
-
+      
+    # Install gettext on macOS (macOS-specific step)
+    - name: Install gettext on macOS
+      if: runner.os == 'macOS'
+      run: brew install gettext
+      
     # Create venv
     - name: Setup python
       uses: actions/setup-python@v4
@@ -77,7 +82,7 @@ jobs:
          python -m pip install sc2pathlib --target=sc2pathlib_dist --no-index --find-links dist --force-reinstall
 
     # See - https://github.com/actions/upload-artifact/issues/39
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       name: Upload archive
       with:
         name: ${{ matrix.os }}_python${{ matrix.python-version }}
