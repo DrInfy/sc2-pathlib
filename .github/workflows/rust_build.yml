@@ -72,6 +72,13 @@ jobs:
       if: runner.os == 'macOS'
       env:
         DYLD_LIBRARY_PATH: /opt/homebrew/opt/gettext/lib
+        
+    - name: Debug Python setup
+      if: runner.os == 'macOS'
+      run: |
+        echo $DYLD_LIBRARY_PATH
+        ls -l /usr/local/opt/gettext/lib/libintl.8.dylib
+        python --version
     
     # Create venv
     - name: Setup python
