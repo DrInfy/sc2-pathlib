@@ -58,21 +58,20 @@ jobs:
       run: mkdir artifacts
       
     # macOS-specific steps
-    - name: Recreate gettext symlinks (Apple Silicon)
+    - name: Create expected symlink for gettext
       if: runner.os == 'macOS'
       run: |
-        sudo ln -sf /opt/homebrew/opt/gettext/lib/libintl.8.dylib /opt/homebrew/lib/libintl.8.dylib
+        sudo mkdir -p /usr/local/opt/gettext/lib
+        sudo ln -sf /opt/homebrew/opt/gettext/lib/libintl.8.dylib /usr/local/opt/gettext/lib/libintl.8.dylib
 
-    - name: Verify gettext library path
+    - name: Verify symlink for gettext
       if: runner.os == 'macOS'
-      run: |
-        ls -l /opt/homebrew/opt/gettext/lib
-        ls -l /opt/homebrew/lib | grep libintl
+      run: ls -l /usr/local/opt/gettext/lib/libintl.8.dylib
 
     - name: Set DYLD_LIBRARY_PATH
       if: runner.os == 'macOS'
-      run: |
-        export DYLD_LIBRARY_PATH=/opt/homebrew/opt/gettext/lib:$DYLD_LIBRARY_PATH
+      env:
+        DYLD_LIBRARY_PATH: /opt/homebrew/opt/gettext/lib
     
     # Create venv
     - name: Setup python
