@@ -114,6 +114,15 @@ impl VisionMap {
 
         vision_map
     }
+
+    pub fn vision_status_int(&self, int_point: (usize, usize)) -> usize {
+        match self.points[int_point.0][int_point.1] {
+            VisionStatus::NotSeen => 0,
+            VisionStatus::NotSeenButDetected => 0,
+            VisionStatus::Seen => 1,
+            VisionStatus::Detected => 2,
+        }
+    }
 }
 
 fn set_detection(points: &mut Vec<Vec<VisionStatus>>, position: &(f32, f32), sight_range: f32) {
